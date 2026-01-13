@@ -1,4 +1,5 @@
 import os
+import logging
 from src import create_app
 
 # Cloud Access Layer
@@ -10,6 +11,20 @@ except ImportError:
     NGROK_AVAILABLE = False
 
 app = create_app()
+
+class HardwareLogFilter(logging.Filter):
+    """
+    Filter to suppress the noisy polling logs from the hardware monitoring endpoint.
+    """
+    def filter(self, record):
+        return "GET /api/playground/hardware" not in record.getMessage()
+
+def configure_logging():
+    """
+    Attaches the suppression filter to the Werkzeug logger.
+    """
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.addFilter(HardwareLogFilter())
 
 def init_ngrok(port):
     """
@@ -35,6 +50,9 @@ def init_ngrok(port):
 if __name__ == '__main__':
     # Default port for the Scene Detection Playground
     port = 5000
+    
+    # Silence the hardware polling noise
+    configure_logging()
     
     # Initialize tunneling if configuration is present
     init_ngrok(port)

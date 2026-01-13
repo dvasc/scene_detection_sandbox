@@ -22,7 +22,7 @@ GPUtil==1.4.0
 # Computer Vision (Shot Detection)
 scenedetect[opencv]==0.6.7.1
 opencv-python==4.11.0.86
-numpy==2.3.5
+numpy>=1.26.0
 
 # Machine Learning (Local Qwen3-VL Inference)
 torch==2.6.0
