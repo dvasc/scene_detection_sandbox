@@ -1,9 +1,8 @@
 import os
-import logging
+from werkzeug.serving import WSGIRequestHandler
 from src import create_app
 
 # Cloud Access Layer
-# Integrated for GCE/Remote deployment using the blueprint from Qwen3VL-LoRA-Studio
 try:
     from pyngrok import ngrok, conf
     NGROK_AVAILABLE = True
@@ -12,24 +11,21 @@ except ImportError:
 
 app = create_app()
 
-class HardwareLogFilter(logging.Filter):
+class FilteredRequestHandler(WSGIRequestHandler):
     """
-    Filter to suppress the noisy polling logs from the hardware monitoring endpoint.
+    Custom Request Handler to suppress high-frequency logs from the hardware monitor.
+    This intercepts the log_request call at the WSGI server level, guaranteeing suppression.
     """
-    def filter(self, record):
-        return "GET /api/playground/hardware" not in record.getMessage()
-
-def configure_logging():
-    """
-    Attaches the suppression filter to the Werkzeug logger.
-    """
-    werkzeug_logger = logging.getLogger('werkzeug')
-    werkzeug_logger.addFilter(HardwareLogFilter())
+    def log_request(self, code='-', size='-'):
+        # If the request path contains our polling endpoint, skip logging entirely.
+        if 'GET /api/playground/hardware' in self.requestline:
+            return
+        # Otherwise, proceed with standard logging
+        super().log_request(code, size)
 
 def init_ngrok(port):
     """
     Initializes an ngrok tunnel to expose the local server to the internet.
-    Only runs if NGROK_AUTHTOKEN is found in the environment variables.
     """
     token = os.environ.get("NGROK_AUTHTOKEN")
     if not token or not NGROK_AVAILABLE:
@@ -48,16 +44,15 @@ def init_ngrok(port):
             print(f"\n[DEPLOY] Failed to start ngrok tunnel: {e}")
 
 if __name__ == '__main__':
-    # Default port for the Scene Detection Playground
     port = 5000
     
-    # Silence the hardware polling noise
-    configure_logging()
-    
-    # Initialize tunneling if configuration is present
     init_ngrok(port)
     
-    # Standard Flask runner
-    # Note: host="0.0.0.0" is required for the application to be reachable 
-    # through the ngrok tunnel and within a cloud VM network.
-    app.run(debug=True, port=port, host="0.0.0.0")
+    # Pass our custom handler to the Flask run method.
+    # request_handler is a supported kwarg for the underlying werkzeug.serving.run_simple
+    app.run(
+        debug=True, 
+        port=port, 
+        host="0.0.0.0", 
+        request_handler=FilteredRequestHandler
+    )
