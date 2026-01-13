@@ -1,6 +1,6 @@
 # Cloud Provisioning Guide: Google Compute Engine (GCE)
 
-This guide details the process for deploying the **Scene Detection Playground** on Google Cloud Platform. The system relies on specific hardware acceleration (NVIDIA GPUs) for local VLM inference and video processing (FFmpeg), so correct environment configuration is critical.
+This guide details the process for deploying the **Scene Detection Sandbox** on Google Cloud Platform. The system relies on specific hardware acceleration (NVIDIA GPUs) for local VLM inference and video processing (FFmpeg), so correct environment configuration is critical.
 
 ## 1. Prerequisites
 
@@ -44,8 +44,8 @@ Our automated scripts handle system updates, NVIDIA driver installation, CUDA to
 3. **Clone the Repository**:
 
    ```bash
-   git clone https://github.com/your-username/scene_detection_playground.git
-   cd scene_detection_playground
+   git clone https://github.com/dvasc/scene_detection_sandbox.git
+   cd scene_detection_sandbox
    ```
 
 4. **Execute the Provisioning Script**:
@@ -65,11 +65,11 @@ Our automated scripts handle system updates, NVIDIA driver installation, CUDA to
 
 ## 4. Launching the Application
 
-After the instance restarts, reconnect via SSH and launch the playground.
+After the instance restarts, reconnect via SSH and launch the sandbox.
 
 1. **Navigate to the directory**:
    ```bash
-   cd scene_detection_playground
+   cd scene_detection_sandbox
    ```
 
 2. **Run the Launch Script**:
@@ -86,7 +86,7 @@ After the instance restarts, reconnect via SSH and launch the playground.
    🚀 PUBLIC CLOUD ACCESS ENABLED
    🔗 ACCESS UI HERE: https://<random-id>.ngrok-free.app
    ```
-   Click the link to open the Playground in your local browser.
+   Click the link to open the Sandbox in your local browser.
 
 ## 5. Troubleshooting Common Issues
 

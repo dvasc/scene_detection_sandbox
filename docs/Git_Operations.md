@@ -1,5 +1,5 @@
 # 📘 Git Operations Standard: Version Control & GitHub Integration
-**Project:** Scene Detection Playground
+**Project:** Scene Detection Sandbox
 **Level:** DevOps Core Competency
 
 ---
@@ -14,7 +14,7 @@ git config --global user.email "your_email@example.com"
 ```
 
 ## Phase 2: Initializing the Local Repository
-1.  Navigate to your project root: `cd path/to/scene_detection_playground`
+1.  Navigate to your project root: `cd path/to/scene_detection_sandbox`
 2.  Initialize Git: 
     ```bash
     git init
