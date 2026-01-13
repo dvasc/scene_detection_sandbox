@@ -15,7 +15,10 @@ git config --global user.email "your_email@example.com"
 
 ## Phase 2: Initializing the Local Repository
 1.  Navigate to your project root: `cd path/to/scene_detection_playground`
-2.  Initialize Git: `git init`
+2.  Initialize Git: 
+    ```bash
+    git init
+    ```
 3.  Create a `.gitignore` file to exclude secrets and large files from version control.
 
 ## Phase 3: Committing Changes (The Save Point)
@@ -40,7 +43,10 @@ GitHub requires tokens for command-line access, not passwords.
 1.  Create a new, empty repository on GitHub.com.
 2.  Link your local repository to the remote one:
     ```bash
-    git remote add origin <your-repository-url>
+    git remote add origin https://github.com/dvasc/scene_detection_sandbox.git
+    ```
+    ```bash
+    git remote -v
     ```
 3.  Rename your primary branch to `main`:
     ```bash
