@@ -1,0 +1,22 @@
+# Video Processing Parameters
+video_processing:
+  frames_per_shot: 1
+  scene_detection_threshold: 27.0
+  image_width: 448
+  image_quality: 80
+
+# Chunking Logic for Narrative Analysis
+# These values serve as defaults for the sliding window engine.
+chunking:
+  # The maximum number of shots to include in a single VLM prompt
+  shots_per_chunk: 50
+  
+  # The stride (step size) when no scene break is detected in the current window
+  default_stride: 40
+
+# Multimodal AI Execution Parameters
+ai_params:
+  temperature: 0.1
+  max_output_tokens: 8192
+  # Whether to include raw thinking tags in the processed result (if supported by model)
+  include_thoughts: true

@@ -1,0 +1,76 @@
+/**
+ * Dark Tech 2026 Design System.
+ * Aesthetic: Void Black, Neon Cyan, Glassmorphism, Precision Engineering.
+ */
+:root {
+    /* --- COLOR PALETTE (Void & Neon) --- */
+    --bg-color: #030303;
+    /* Deepest Void */
+    --bg-grid: #08080a;
+    /* Subtle Grid Background */
+
+    --sidebar-bg: rgba(10, 10, 12, 0.6);
+    /* Glassy Dark */
+    --card-bg: rgba(18, 18, 20, 0.4);
+    /* High Transparency Glass */
+
+    --item-bg: rgba(30, 30, 35, 0.3);
+    --item-hover: rgba(255, 255, 255, 0.03);
+
+    /* Semantic Accents (Neon Cyan & Electric Blue) */
+    --accent: #00f0ff;
+    /* Cyberpunk Cyan */
+    --accent-dim: #007a82;
+    --accent-glow: rgba(0, 240, 255, 0.15);
+    --accent-hover: #66f5ff;
+
+    --purple-accent: #bc13fe;
+    /* Secondary Neon */
+
+    /* Functional Colors */
+    --success: #00ff9d;
+    /* Neon Green */
+    --warning: #ffb800;
+    /* Tech Amber */
+    --danger: #ff003c;
+    /* Sci-Fi Red */
+    --break-border: #ff0055;
+
+    /* Borders & Glass */
+    --border: rgba(255, 255, 255, 0.08);
+    --border-light: rgba(255, 255, 255, 0.03);
+    --border-active: var(--accent);
+
+    --glass-bg: rgba(10, 10, 12, 0.7);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-backdrop: blur(12px);
+
+    /* Text Stack */
+    --text-main: #ffffff;
+    --text-dim: #888890;
+    --text-muted: #555560;
+    --text-on-accent: #000000;
+
+    /* --- SPACING SYSTEM --- */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    /* --- RADIUS (Slightly Sharper) --- */
+    --radius-lg: 16px;
+    --radius-md: 8px;
+    --radius-sm: 4px;
+
+    /* --- LAYOUT CONSTANTS --- */
+    --header-height: 80px;
+    --sidebar-width: 380px;
+    --control-deck-height: 80px;
+
+    /* --- EFFECTS --- */
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.8);
+    --shadow-glow: 0 0 20px rgba(0, 240, 255, 0.1);
+}

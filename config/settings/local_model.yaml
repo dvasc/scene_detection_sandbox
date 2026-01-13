@@ -1,0 +1,43 @@
+# Local Inference Configuration for Qwen3-VL
+# Used by engines/qwen_client.py for the local Playground backend.
+
+model:
+  # Hugging Face Model ID
+  # Target: The "Thinking" variant which outputs reasoning traces within <think> tags.
+  id: "huihui-ai/Huihui-Qwen3-VL-2B-Thinking-abliterated"
+  
+  # Directory to store model weights (relative to project root)
+  cache_dir: "models"
+  
+  # Hardware Acceleration: "auto" detects CUDA. Set to "cpu" for non-GPU environments.
+  device: "auto"
+
+quantization:
+  # 4-Bit NormalFloat (NF4) Quantization
+  # Required for running large VLM models on consumer-grade GPUs (8GB-12GB VRAM).
+  load_in_4bit: true
+  
+  # Quantization type
+  bnb_4bit_quant_type: "nf4"
+  
+  # Compute Dtype: bfloat16 is recommended for Ampere (RTX 30 series) or newer.
+  bnb_4bit_compute_dtype: "bfloat16"
+  
+  # Double Quantization: Optimizes VRAM footprint further.
+  bnb_4bit_use_double_quant: true
+
+generation:
+  # Max Tokens: Set high to accommodate long Chain-of-Thought (Thinking) blocks.
+  max_new_tokens: 8192
+  
+  # Temperature: 0.1 for high determinism.
+  temperature: 0.1
+  
+  # Top P: Nucleus sampling parameter.
+  top_p: 0.9
+  
+  # Repetition Penalty: Prevents model from looping on similar visual descriptions.
+  repetition_penalty: 1.2
+  
+  # Must be true for temperature/top_p to take effect.
+  do_sample: true

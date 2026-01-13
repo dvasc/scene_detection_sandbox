@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playground | Scene Detection Sandbox</title>
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Design System & Components -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground.css') }}">
+</head>
+
+<body>
+
+    <header>
+        <button class="btn btn-secondary" onclick="window.location.reload()" title="New Session"
+            style="width: 40px; height: 40px; padding: 0; flex-shrink: 0;">
+            <i class="fa-solid fa-rotate-right"></i>
+        </button>
+
+        <div class="project-info">
+            <div class="sys-label">Multimodal Evaluation sandbox // Standalone</div>
+            <h1 id="playgroundTitle">Scene Detection Playground</h1>
+        </div>
+
+        <div class="stats-hud" id="simHud" style="opacity: 0;">
+            <div class="hud-item">
+                <span class="hud-val" id="inferenceTime">0.0s</span>
+                <span class="hud-lbl">Runtime</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item">
+                <span class="hud-val highlight" id="modeBadge">VLM</span>
+                <span class="hud-lbl">Reasoner</span>
+            </div>
+        </div>
+    </header>
+
+    <script>
+        window.CLOUD_MODELS = {{ cloud_models | tojson }};
+        window.ADAPTER_MANIFEST = {{ adapters | tojson }};
+    </script>
+
+    <main id="mainContainer">
+
+        <!-- STATE 1: MISSION CONTROL CONFIGURATION -->
+        <div id="configView" class="view-state active">
+            <div class="mission-control-layout">
+
+                <!-- COLUMN 1: ASSET HUB (Persistent) -->
+                <div class="mc-column mc-sidebar">
+                    <div class="mc-panel asset-hub">
+                        <div class="panel-header">
+                            <i class="fa-solid fa-database"></i> Asset Library
+                        </div>
+                        <div class="asset-actions">
+                            <button id="openImportModalBtn" class="btn btn-secondary btn-sm" style="flex:1;">
+                                <i class="fa-solid fa-cloud-arrow-down"></i> Import Model
+                            </button>
+                            <button id="openUploadModalBtn" class="btn btn-secondary btn-sm" style="flex:1;">
+                                <i class="fa-solid fa-upload"></i> Upload LoRA
+                            </button>
+                        </div>
+                        <div class="asset-stats">
+                            <div class="stat-row">
+                                <span>Base Models</span>
+                                <span class="val">{{ models|length }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span>Adapters</span>
+                                <span class="val">{{ adapters|length }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mc-panel archive-hub">
+                        <div class="panel-header">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Mission Archive
+                        </div>
+                        <div class="archive-list-container" id="sessionList">
+                            <!-- Populated by JS -->
+                            <div class="sys-label" style="text-align: center; padding: 2rem; opacity: 0.5;">
+                                <i class="fa-solid fa-spinner fa-spin"></i><br>Loading Archive...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUMN 2: WORKFLOW CANVAS (Transient) -->
+                <div class="mc-column mc-canvas">
+
+                    <!-- Step 1: Reasoner -->
+                    <div class="mc-step">
+                        <div class="step-label">01 // REASONER CONFIGURATION</div>
+                        <div class="step-content">
+                            <div class="form-group">
+                                <label class="config-label">Base Model Checkpoint</label>
+                                <select id="modelSelect" class="dataset-select" style="width: 100%;"
+                                    data-inspect="model_select">
+                                    <option value="" disabled selected>-- Select Base Model --</option>
+                                    {% for model in models %}
+                                    <option value="{{ model }}">{{ model }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div id="adapterContainer" class="form-group" style="margin-top: 12px; display: none;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                                    <label class="config-label">LoRA Adapter</label>
+                                    <div class="force-mode-container" style="border:none; margin:0; padding:0;">
+                                        <input type="checkbox" id="forceLoadAdapter" class="force-checkbox">
+                                        <label for="forceLoadAdapter" class="force-label" style="margin-left:6px;"
+                                            data-inspect="force_mode">Force Load</label>
+                                    </div>
+                                </div>
+                                <select id="adapterPath" class="dataset-select" style="width: 100%;" disabled
+                                    data-inspect="adapter_select">
+                                    <option value="">Select Base Model First</option>
+                                </select>
+                                <div id="adapterMetaHint" class="sys-label"
+                                    style="font-size:0.55rem; color:var(--text-muted); margin-top:4px; display:none;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Media -->
+                    <div class="mc-step">
+                        <div class="step-label">02 // SOURCE MEDIA</div>
+                        <div class="step-content">
+                            <div class="upload-area" id="dropZone" style="min-height: 100px; padding: 1.5rem;">
+                                <div id="dropPrompt">
+                                    <i class="fa-solid fa-film upload-icon" style="font-size: 1.2rem;"></i>
+                                    <div class="upload-text">Drag & Drop Video Source</div>
+                                </div>
+                                <input type="file" id="videoInput" accept="video/*">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Parameters -->
+                    <div class="mc-step">
+                        <div class="step-label">03 // EXECUTION PARAMETERS</div>
+                        <div class="step-content parameter-grid">
+
+                            <!-- Sampling Group -->
+                            <div class="param-group">
+                                <div class="group-title">Sampling Strategy</div>
+                                <div class="p-row">
+                                    <label class="p-label">Temperature</label>
+                                    <input type="number" id="paramTemp" class="p-input"
+                                        value="{{ defaults.temperature }}" step="0.1" min="0" max="2"
+                                        data-inspect="temp">
+                                </div>
+                                <div class="p-row">
+                                    <label class="p-label">Top P</label>
+                                    <input type="number" id="paramTopP" class="p-input" value="{{ defaults.top_p }}"
+                                        step="0.05" min="0" max="1" data-inspect="top_p">
+                                </div>
+                            </div>
+
+                            <!-- Generation Group -->
+                            <div class="param-group">
+                                <div class="group-title">Generation Control</div>
+                                <div class="p-row">
+                                    <label class="p-label">Max Tokens</label>
+                                    <input type="number" id="paramMaxTokens" class="p-input"
+                                        value="{{ defaults.max_tokens }}" step="128" data-inspect="max_tokens">
+                                </div>
+                                <div class="p-row">
+                                    <label class="p-label">Rep. Penalty</label>
+                                    <input type="number" id="paramRepPenalty" class="p-input"
+                                        value="{{ defaults.repetition_penalty }}" step="0.05" min="1.0" max="2.0"
+                                        data-inspect="rep_penalty">
+                                </div>
+                            </div>
+
+                            <!-- Context Group -->
+                            <div class="param-group full-width">
+                                <div class="group-title">Context & Scaling</div>
+                                <div class="p-row" style="margin-bottom: 8px;">
+                                    <label class="p-label">Window Size</label>
+                                    <div class="stepper-group" style="flex:1;">
+                                        <button id="winDec" class="step-btn" type="button"><i
+                                                class="fa-solid fa-minus"></i></button>
+                                        <input type="number" id="windowSize" class="stepper-input" value="32" min="8"
+                                            max="128" readonly data-inspect="window_size">
+                                        <button id="winInc" class="step-btn" type="button"><i
+                                                class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                </div>
+                                <div class="p-grid-2">
+                                    <div>
+                                        <label class="p-label">LoRA Scale</label>
+                                        <input type="number" id="paramLoraScale" class="p-input"
+                                            value="{{ defaults.lora_scale }}" step="0.1" min="0.0" max="2.0"
+                                            data-inspect="lora_scale">
+                                    </div>
+                                    <div>
+                                        <label class="p-label">Stream Rate</label>
+                                        <input type="number" id="streamInterval" class="p-input"
+                                            value="{{ defaults.stream_interval }}" step="10" min="10" max="500"
+                                            data-inspect="stream_rate">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hardware Mode -->
+                            <div class="param-group full-width"
+                                style="border-color: var(--border-light); background: rgba(0,0,0,0.2);">
+                                <div class="force-mode-container" style="border:none; margin:0; padding:0;">
+                                    <input type="checkbox" id="highFidelityMode" class="force-checkbox hifi-checkbox" {%
+                                        if not gpu_capabilities.is_capable %}disabled{% endif %}>
+                                    <div style="display:flex; flex-direction:column; margin-left: 8px;">
+                                        <label for="highFidelityMode" class="force-label"
+                                            data-inspect="hifi_mode">High-Fidelity Mode (BF16)</label>
+                                        <span style="font-size:0.55rem; color:var(--text-muted);">
+                                            {% if gpu_capabilities.is_capable %}
+                                            Capable ({{ gpu_capabilities.total_vram_gb }}GB VRAM)
+                                            {% else %}
+                                            Unavailable (< 12GB VRAM) {% endif %} </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Prompts (Collapsible) -->
+                            <div class="param-group full-width">
+                                <div class="group-title" id="promptToggle"
+                                    style="cursor: pointer; display:flex; justify-content:space-between;">
+                                    <span>System & Context Prompts</span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                                <div id="promptBody" style="display:none; margin-top: 10px;">
+                                    <label class="p-label">System Prompt</label>
+                                    <textarea id="paramSystem" class="control-input"
+                                        style="height: 60px; font-size: 0.6rem; margin-bottom: 8px;">{{ defaults.system_prompt }}</textarea>
+
+                                    <label class="p-label">Main Template</label>
+                                    <textarea id="paramMain" class="control-input"
+                                        style="height: 60px; font-size: 0.6rem;">{{ defaults.main_prompt }}</textarea>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Launch -->
+                    <div class="mc-step no-border">
+                        <button id="processBtn" class="btn btn-primary launch-btn" disabled>
+                            <span class="launch-text">INITIALIZE MISSION</span>
+                            <span class="launch-sub">Awaiting Configuration</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- COLUMN 3: INSPECTOR (Contextual) -->
+                <div class="mc-column mc-inspector">
+                    <div class="mc-panel inspector-panel">
+                        <div class="panel-header">
+                            <i class="fa-solid fa-circle-info"></i> Context Inspector
+                        </div>
+                        <div id="inspectorContent" class="inspector-content">
+                            <!-- Dynamic Content -->
+                            <div class="placeholder-state">
+                                <i class="fa-solid fa-crosshairs"></i>
+                                <p>Hover over a parameter or select an asset to view technical details.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mc-panel help-panel">
+                        <div class="panel-header">
+                            <i class="fa-solid fa-book-open"></i> Quick Reference
+                        </div>
+                        <div class="help-content">
+                            <div class="help-item">
+                                <span class="key">Chunking</span>
+                                <span class="val">Sliding window analysis</span>
+                            </div>
+                            <div class="help-item">
+                                <span class="key">Protocol</span>
+                                <span class="val">5-Stage Forensic Audit</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- STATE 2: PIPELINE MONITORING -->
+        <div id="processingView" class="view-state">
+            <div class="monitor-deck">
+                <!-- Left Flank: System Vitals -->
+                <div class="monitor-flank left">
+                    <!-- CPU Widget -->
+                    <div class="monitor-widget primary">
+                        <div class="monitor-label">
+                            <i class="fa-solid fa-microchip"></i> CPU CORE
+                        </div>
+                        <div class="monitor-main">
+                            <div class="monitor-val" id="monitorCpuVal">--%</div>
+                            <div class="monitor-bar-track">
+                                <div class="monitor-bar-fill" id="monitorCpuBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RAM Widget -->
+                    <div class="monitor-widget">
+                        <div class="monitor-label">
+                            <i class="fa-solid fa-memory"></i> SYSTEM RAM
+                        </div>
+                        <div class="monitor-main">
+                            <div class="monitor-val" id="monitorRamVal">--%</div>
+                            <div class="monitor-bar-track">
+                                <div class="monitor-bar-fill" id="monitorRamBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="monitor-detail" id="monitorRamDetail">-- / -- GB</div>
+                    </div>
+
+                    <!-- Disk Widget -->
+                    <div class="monitor-widget">
+                        <div class="monitor-label">
+                            <i class="fa-solid fa-hard-drive"></i> STORAGE (LOCAL)
+                        </div>
+                        <div class="monitor-main">
+                            <div class="monitor-val" id="monitorDiskVal">--%</div>
+                            <div class="monitor-bar-track">
+                                <div class="monitor-bar-fill" id="monitorDiskBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="monitor-detail" id="monitorDiskDetail">-- / -- GB</div>
+                    </div>
+
+                    <!-- GPU Container (Moved from Right) -->
+                    <div id="monitorGpuContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                        <!-- GPU specific widgets injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Center: Terminal Area -->
+                <div class="terminal-wrapper">
+                    <!-- Stop Button (Moved here) -->
+                    <div class="abort-container">
+                        <button id="abortBtn" class="btn btn-danger">
+                            <i class="fa-solid fa-ban"></i> Stop Execution
+                        </button>
+                    </div>
+
+                    <!-- Terminal Card -->
+                    <div class="terminal-card">
+                        <div class="terminal-header">
+                            <div class="term-dots"><span></span><span></span><span></span></div>
+                            <span class="term-title">playground_inference_pipeline.log</span>
+                        </div>
+                        <div class="terminal-body" id="consoleLog"></div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATE 3: RESULTS -->
+        <div id="resultsView" class="view-state results-layout">
+            <div class="video-column">
+                <div class="video-container">
+                    <video id="videoPlayer" controls preload="auto"></video>
+                    <div id="videoOverlay"><span id="overlayShotId"></span></div>
+                </div>
+                <div class="control-deck">
+                    <div class="nav-group">
+                        <button class="nav-btn" onclick="window.skipToScene(-1)" title="Prev Scene"><i
+                                class="fa-solid fa-backward-fast"></i></button>
+                        <button class="nav-btn" onclick="window.skipToShot(-1)" title="Prev Shot"><i
+                                class="fa-solid fa-backward-step"></i></button>
+                    </div>
+                    <div class="deck-separator"></div>
+                    <div class="nav-group">
+                        <button class="nav-btn" onclick="window.skipToShot(1)" title="Next Shot"><i
+                                class="fa-solid fa-forward-step"></i></button>
+                        <button class="nav-btn" onclick="window.skipToScene(1)" title="Next Scene"><i
+                                class="fa-solid fa-forward-fast"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar" style="position: relative;">
+                <div class="sidebar-sticky-header">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
+                        <span class="sys-label" style="color: var(--accent);">VLM OUTPUT // EVALUATION</span>
+                        <div class="sidebar-title">Forensic Narrative Audit</div>
+                    </div>
+                    <div class="sidebar-actions" style="display: grid; grid-template-columns: 1fr 120px; gap: 8px;">
+                        <button id="resetPlaygroundBtn" class="btn btn-secondary">
+                            <i class="fa-solid fa-rotate-left"></i> Return to Config
+                        </button>
+                        <button id="toggleDebugBtn" class="btn btn-secondary">
+                            <i class="fa-solid fa-terminal"></i> Debug
+                        </button>
+                    </div>
+                </div>
+                <div id="shotGrid" class="read-only-grid"></div>
+                <div id="debugPanel" class="debug-panel">
+                    <div class="debug-tabs">
+                        <div class="debug-tab active" data-log="pipeline">Pipeline Trace</div>
+                        <div class="debug-tab" data-log="logs">VLM Interaction Logs</div>
+                    </div>
+                    <div id="debugContent" class="debug-content"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODALS -->
+
+    <!-- Import Model Modal -->
+    <dialog id="importModal" class="system-dialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Import from HuggingFace
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label class="config-label">Model ID</label>
+                    <input type="text" id="hfModelId" class="control-input" placeholder="e.g. google/siglip-so400m">
+                    <span style="font-size: 0.55rem; color: var(--text-muted); margin-top: 4px;">Target model will be
+                        cached to local storage.</span>
+                </div>
+
+                <!-- Import Progress -->
+                <div id="importProgressContainer" style="margin-top: 16px; display: none;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span id="importStatusText"
+                            style="font-size: 0.6rem; color: var(--text-dim);">Initializing...</span>
+                        <span id="importPercentText" style="font-size: 0.6rem; color: var(--accent);">0%</span>
+                    </div>
+                    <div style="height: 4px; background: #000; border-radius: 2px; overflow: hidden;">
+                        <div id="importProgressBar"
+                            style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn btn-secondary modal-close-btn" data-modal="importModal">Cancel</button>
+                <button id="importModelBtn" class="btn btn-primary">Download</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Upload Adapter Modal -->
+    <dialog id="uploadModal" class="system-dialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <i class="fa-solid fa-upload"></i> Upload LoRA Adapter
+            </div>
+            <div class="dialog-body">
+                <div class="upload-area" id="adapterDropZone"
+                    style="min-height: 100px; padding: 1rem; border-color: var(--border);">
+                    <div style="pointer-events: none;">
+                        <i class="fa-solid fa-file-zipper upload-icon" style="font-size: 1rem;"></i>
+                        <div class="upload-text" style="font-size: 0.7rem;">Drop .zip file here</div>
+                    </div>
+                    <input type="file" id="adapterUploadInput" accept=".zip">
+                </div>
+
+                <!-- Upload Progress -->
+                <div id="uploadProgressContainer" style="margin-top: 16px; display: none;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span id="uploadStatusText"
+                            style="font-size: 0.6rem; color: var(--text-dim);">Uploading...</span>
+                        <span id="uploadPercentText" style="font-size: 0.6rem; color: var(--accent);">0%</span>
+                    </div>
+                    <div style="height: 4px; background: #000; border-radius: 2px; overflow: hidden;">
+                        <div id="uploadProgressBar"
+                            style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn btn-secondary modal-close-btn" data-modal="uploadModal">Cancel</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script type="module"
+        src="{{ url_for('static', filename='js/modules/playground/playground_bootstrap.js') }}"></script>
+</body>
+
+</html>

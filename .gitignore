@@ -1,0 +1,38 @@
+# === Python / Environment ===
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.env
+.flaskenv
+
+# === Project Specific Data ===
+# We exclude the sandbox data and models to keep the repository lightweight
+data/
+models/
+
+
+# Exclude generated artifacts/zips
+*.zip
+*.log
+
+# === OS Specific ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# === IDE / Editors ===
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# === Local Files ===
+Qwen3VL-LoRA-Studio-app.txt
+scene_detection_playground.zip

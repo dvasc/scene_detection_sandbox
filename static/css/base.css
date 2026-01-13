@@ -1,0 +1,49 @@
+/* Global Normalization */
+* {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background-color: var(--bg-color);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    color: var(--text-main);
+    margin: 0;
+    line-height: 1.4;
+    overflow: hidden;
+    /* From line 95 */
+    display: flex;
+    /* From line 524 */
+    flex-direction: column;
+    /* From line 525 */
+    height: 100vh;
+    /* From line 526 */
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Professional Thin Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-dim);
+}

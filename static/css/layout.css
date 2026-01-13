@@ -1,0 +1,195 @@
+/* --- HEADER COMMAND CENTER --- */
+header {
+    height: var(--header-height);
+    background-color: var(--sidebar-bg);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 0 1.5rem;
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    flex-shrink: 0;
+    gap: 2rem;
+}
+
+.project-info {
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+    overflow: hidden;
+}
+
+#playgroundTitle {
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin: 2px 0 0 0;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Global HUD Stats */
+.stats-hud {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.5rem 1.5rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-light);
+    margin-left: auto;
+    transition: opacity 0.3s ease;
+}
+
+.hud-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hud-val {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.hud-lbl {
+    font-size: 0.5rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.hud-val.highlight {
+    color: var(--success);
+}
+
+.hud-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+    margin: 0 0.25rem;
+}
+
+/* --- MAIN WORKSPACE SPLIT --- */
+main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Video Player Column Styling */
+.video-column {
+    width: 35vw;
+    display: flex;
+    flex-direction: column;
+    background-color: #000;
+    border-right: 1px solid var(--border);
+}
+
+.video-container {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+video {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 4px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+}
+
+/* Navigation Deck (Playhead Controls) */
+.control-deck {
+    height: var(--control-deck-height);
+    background-color: var(--sidebar-bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.nav-btn {
+    background: var(--item-bg);
+    border: 1px solid var(--border-light);
+    color: var(--text-main);
+    width: 54px;
+    height: 38px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.nav-btn:hover {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    transform: scale(1.05);
+}
+
+.nav-group {
+    display: flex;
+    gap: 4px;
+}
+
+.deck-separator {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    margin: 0 1.5rem;
+}
+
+/* Sidebar Framework */
+.sidebar {
+    width: 65vw;
+    background-color: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+}
+
+/* STICKY HEADER & ACTION BAR */
+.sidebar-sticky-header {
+    backdrop-filter: blur(12px);
+    background: rgba(17, 17, 20, 0.85);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    flex-shrink: 0;
+    z-index: 50;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.sidebar-title {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sidebar-actions {
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    gap: 6px;
+    align-items: stretch;
+}
