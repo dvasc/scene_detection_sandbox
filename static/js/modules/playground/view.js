@@ -350,10 +350,14 @@ export function renderSessionList(sessions, onSelect, onDelete) {
         item.innerHTML = `
             <div class="s-top">
                 <span class="s-name" title="${s.video_filename}">${s.video_filename}</span>
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div class="session-actions-group">
                     <span class="s-date">${date}</span>
-                    <i class="fa-solid fa-trash" style="font-size:0.7rem; color:var(--text-muted); cursor:pointer;" 
-                       title="Delete Session" data-delete="${s.session_id}"></i>
+                    <button class="session-action-btn download" title="Download Session Archive (.zip)" data-download="${s.session_id}">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                    <button class="session-action-btn delete" title="Delete Session" data-delete="${s.session_id}">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
                 </div>
             </div>
             <div class="s-meta">
@@ -370,6 +374,13 @@ export function renderSessionList(sessions, onSelect, onDelete) {
         delBtn.onclick = (e) => {
             e.stopPropagation();
             onDelete(s.session_id);
+        };
+
+        const dlBtn = item.querySelector('[data-download]');
+        dlBtn.onclick = (e) => {
+            e.stopPropagation();
+            // Trigger direct download via API endpoint
+            window.location.href = `/api/playground/session/${s.session_id}/download`;
         };
 
         item.onclick = () => onSelect(s.session_id);

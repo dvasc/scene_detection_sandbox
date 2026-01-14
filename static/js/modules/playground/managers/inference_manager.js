@@ -1,28 +1,24 @@
 /**
  * Inference Manager
  * Orchestrates the execution of the multimodal pipeline.
- * Collects UI parameters (including LoRA Scale, High Fidelity Mode, & Repetition Penalty), 
- * submits the job, polls for status, manages abortion, and finalizes the result.
+ * Collects UI parameters, submits jobs, polls status, and handles MPA transitions.
  */
 
 import { store } from '../store.js';
 import * as api from '../service.js';
 import * as ui from '../view.js';
-import * as timeline from '../inference_timeline.js';
-import * as player from '../player_view.js';
 
 const POLLING_INTERVAL = 1500;
 
 export class InferenceManager {
     constructor() {
-        this.currentTaskId = null; // Track active task for abortion
+        this.currentTaskId = null;
+        this.shouldAutoDownload = false;
 
         this.els = {
             modelSelect: document.getElementById('modelSelect'),
             adapterInput: document.getElementById('adapterPath'),
             windowInput: document.getElementById('windowSize'),
-
-            // Hyperparameters
             paramTemp: document.getElementById('paramTemp'),
             paramTopP: document.getElementById('paramTopP'),
             paramMaxTokens: document.getElementById('paramMaxTokens'),
@@ -31,12 +27,9 @@ export class InferenceManager {
             paramLoraScale: document.getElementById('paramLoraScale'),
             paramRepPenalty: document.getElementById('paramRepPenalty'),
             streamInterval: document.getElementById('streamInterval'),
-
-            // Toggles
             forceCheckbox: document.getElementById('forceLoadAdapter'),
             hifiCheckbox: document.getElementById('highFidelityMode'),
-
-            // Actions
+            autoDownloadCheck: document.getElementById('autoDownloadCheck'),
             processBtn: document.getElementById('processBtn'),
             abortBtn: document.getElementById('abortBtn')
         };
@@ -56,103 +49,55 @@ export class InferenceManager {
     async startInference() {
         if (!store.videoFile) return;
 
-        // Reset Abort State
-        this.currentTaskId = null;
-        if (this.els.abortBtn) {
-            this.els.abortBtn.disabled = false;
-            this.els.abortBtn.innerHTML = '<i class="fa-solid fa-ban"></i> Stop Execution';
-        }
+        // Visual feedback before redirect
+        const btn = this.els.processBtn;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Initializing...';
 
-        ui.toggleViewState('processing');
-        ui.updateProgressBar(0);
+        this.shouldAutoDownload = this.els.autoDownloadCheck ? this.els.autoDownloadCheck.checked : false;
 
-        // --- Log Start Parameters ---
-        let msg = "Dispatching multimodal payload...";
-
-        const isForce = this.els.forceCheckbox && this.els.forceCheckbox.checked;
-        const isHifi = this.els.hifiCheckbox && this.els.hifiCheckbox.checked && !this.els.hifiCheckbox.disabled;
-
-        if (isForce || isHifi) {
-            let modes = [];
-            if (isForce) modes.push("FORCE ADAPTER");
-            if (isHifi) modes.push("HIGH-FIDELITY (BF16)");
-            ui.logConsole(`⚠️ ACTIVE MODES: ${modes.join(', ')}`, false, true);
-        } else {
-            ui.logConsole(msg);
-        }
-
-        const startTime = Date.now();
         const formData = new FormData();
-
-        // Core Inputs
         formData.append('video', store.videoFile);
         formData.append('model_id', this.els.modelSelect.value);
         formData.append('window_size', this.els.windowInput.value);
-
-        // Hyperparameters
         formData.append('temperature', this.els.paramTemp.value);
         formData.append('top_p', this.els.paramTopP.value);
         formData.append('max_tokens', this.els.paramMaxTokens.value);
 
-        // System Prompt: Use override if exists, else it might fall back to default backend logic
-        if (this.els.paramSystem) {
-            formData.append('system_prompt', this.els.paramSystem.value);
-        }
+        if (this.els.paramSystem) formData.append('system_prompt', this.els.paramSystem.value);
+        if (this.els.streamInterval) formData.append('stream_interval', this.els.streamInterval.value);
+        if (this.els.paramMain) formData.append('main_prompt', this.els.paramMain.value);
+        if (this.els.paramRepPenalty) formData.append('repetition_penalty', this.els.paramRepPenalty.value);
+        if (this.els.paramLoraScale) formData.append('lora_scale', this.els.paramLoraScale.value);
 
-        // Stream Interval (Operational Param)
-        if (this.els.streamInterval) {
-            formData.append('stream_interval', this.els.streamInterval.value);
-        }
-
-        // Main Prompt Override
-        if (this.els.paramMain) {
-            formData.append('main_prompt', this.els.paramMain.value);
-        }
-
-        if (this.els.paramRepPenalty) {
-            formData.append('repetition_penalty', this.els.paramRepPenalty.value);
-        }
-
-        if (this.els.paramLoraScale) {
-            formData.append('lora_scale', this.els.paramLoraScale.value);
-        }
-
-        if (isForce) {
-            formData.append('bypass_validation', 'true');
-        }
-
-        if (isHifi) {
-            formData.append('high_fidelity_mode', 'true');
-        }
+        if (this.els.forceCheckbox && this.els.forceCheckbox.checked) formData.append('bypass_validation', 'true');
+        if (this.els.hifiCheckbox && this.els.hifiCheckbox.checked) formData.append('high_fidelity_mode', 'true');
 
         const adapterPath = this.els.adapterInput ? this.els.adapterInput.value.trim() : '';
-        if (adapterPath) {
-            formData.append('adapter_path', adapterPath);
-        }
+        if (adapterPath) formData.append('adapter_path', adapterPath);
 
         try {
             const data = await api.triggerInferenceApi(formData);
-            this.currentTaskId = data.task_id;
-            this.pollStatus(data.task_id, startTime);
+            // MPA Transition: Redirect to processing view
+            const dlParam = this.shouldAutoDownload ? '?auto_download=true' : '';
+            window.location.href = `/playground/processing/${data.task_id}${dlParam}`;
         } catch (err) {
-            ui.logConsole(`[FATAL] ${err.message}`, false, true);
+            alert(`Failed to start inference: ${err.message}`);
+            btn.disabled = false;
+            btn.innerHTML = 'INITIALIZE MISSION';
         }
     }
 
     async handleAbort() {
         if (!this.currentTaskId) return;
-
         if (this.els.abortBtn) {
             this.els.abortBtn.disabled = true;
             this.els.abortBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Stopping...';
         }
-
-        ui.logConsole("⚠️ Sending abort signal to backend...", false, true);
-
         try {
             await api.abortTaskApi(this.currentTaskId);
         } catch (err) {
-            ui.logConsole(`[ERROR] Failed to send abort signal: ${err.message}`, false, true);
+            console.error("Abort failed:", err);
         }
     }
 
@@ -161,7 +106,7 @@ export class InferenceManager {
             try {
                 const status = await api.pollTaskStatus(taskId);
 
-                if (status.logs && Array.isArray(status.logs) && status.logs.length > 0) {
+                if (status.logs && Array.isArray(status.logs)) {
                     ui.logConsole(status.logs);
                 } else if (status.status) {
                     ui.logConsole(status.status);
@@ -174,34 +119,38 @@ export class InferenceManager {
 
                 if (status.state === 'SUCCESS') {
                     clearInterval(interval);
-                    const totalTime = ((Date.now() - startTime) / 1000).toFixed(2);
-                    await this.finalizeInference(status.result.session_id, totalTime);
+
+                    // Handle Auto-Download before redirecting
+                    if (this.shouldAutoDownload && status.result && status.result.session_id) {
+                        ui.logConsole("[AUTO-DOWNLOAD] Triggering archive download...", true);
+                        // Using hidden iframe or secondary window loc to prevent blocking the redirect
+                        const downloadUrl = `/api/playground/session/${status.result.session_id}/download`;
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = '';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        // Brief delay to allow download handshake
+                        setTimeout(() => {
+                            window.location.href = `/playground/results/${status.result.session_id}`;
+                        }, 1000);
+                    } else {
+                        // MPA Transition: Redirect to results view
+                        window.location.href = `/playground/results/${status.result.session_id}`;
+                    }
+
                 } else if (status.state === 'FAILURE') {
                     clearInterval(interval);
                     ui.logConsole(`[STOPPED] ${status.status}`, false, true);
+                    if (this.els.abortBtn) {
+                        this.els.abortBtn.innerHTML = 'Execution Stopped';
+                    }
                 }
             } catch (err) {
                 console.warn("[POLL] Connecting...", err);
             }
         }, POLLING_INTERVAL);
-    }
-
-    async finalizeInference(sessionId, totalTime) {
-        ui.logConsole("Rehydrating session state from SSOT...", false, true);
-        try {
-            const data = await api.fetchSessionData(sessionId);
-
-            store.inferenceResults = data.shots;
-            store.activeSessionId = sessionId;
-
-            timeline.renderTimeline(sessionId, (shot) => player.seekToShot(shot));
-            player.initPlayer(store.videoUrl);
-            player.syncPlayer();
-
-            ui.updateHUD(`${totalTime}s`, this.els.modelSelect.value);
-            ui.toggleViewState('results');
-        } catch (err) {
-            ui.logConsole(`[ERROR] Failed to hydrate session: ${err.message}`, false, true);
-        }
     }
 }

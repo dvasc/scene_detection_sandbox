@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playground | Scene Detection Sandbox</title>
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Design System & Components -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/variables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+
+    <!-- Playground Module Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/upload.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/queue.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/shot-grid.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/mission-control.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/asset-manager.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/terminal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/monitoring.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/debug.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modules/playground/animations.css') }}">
+</head>
+
+<body>
+
+    <header>
+        <button class="btn btn-secondary" onclick="window.location.href='/playground/config'" title="New Session"
+            style="width: 40px; height: 40px; padding: 0; flex-shrink: 0;">
+            <i class="fa-solid fa-rotate-right"></i>
+        </button>
+
+        <div class="project-info">
+            <div class="sys-label">Multimodal Evaluation sandbox // Standalone</div>
+            <h1 id="playgroundTitle">Scene Detection Playground</h1>
+        </div>
+
+        <div class="stats-hud" id="simHud" style="opacity: 0;">
+            <div class="hud-item">
+                <span class="hud-val" id="inferenceTime">0.0s</span>
+                <span class="hud-lbl">Runtime</span>
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-item">
+                <span class="hud-val highlight" id="modeBadge">VLM</span>
+                <span class="hud-lbl">Reasoner</span>
+            </div>
+        </div>
+    </header>
+
+    <main id="mainContainer">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global Modals (available on all pages) -->
+    <dialog id="importModal" class="system-dialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <i class="fa-solid fa-cloud-arrow-down"></i> Import from HuggingFace
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label class="config-label">Model ID</label>
+                    <input type="text" id="hfModelId" class="control-input" placeholder="e.g. google/siglip-so400m">
+                    <span style="font-size: 0.55rem; color: var(--text-muted); margin-top: 4px;">Target model will be
+                        cached to local storage.</span>
+                </div>
+                <div id="importProgressContainer" style="margin-top: 16px; display: none;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span id="importStatusText"
+                            style="font-size: 0.6rem; color: var(--text-dim);">Initializing...</span>
+                        <span id="importPercentText" style="font-size: 0.6rem; color: var(--accent);">0%</span>
+                    </div>
+                    <div style="height: 4px; background: #000; border-radius: 2px; overflow: hidden;">
+                        <div id="importProgressBar"
+                            style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn btn-secondary modal-close-btn" data-modal="importModal">Cancel</button>
+                <button id="importModelBtn" class="btn btn-primary">Download</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog id="uploadModal" class="system-dialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <i class="fa-solid fa-upload"></i> Upload LoRA Adapter
+            </div>
+            <div class="dialog-body">
+                <div class="upload-area" id="adapterDropZone"
+                    style="min-height: 100px; padding: 1rem; border-color: var(--border);">
+                    <div style="pointer-events: none;">
+                        <i class="fa-solid fa-file-zipper upload-icon" style="font-size: 1rem;"></i>
+                        <div class="upload-text" style="font-size: 0.7rem;">Drop .zip file here</div>
+                    </div>
+                    <input type="file" id="adapterUploadInput" accept=".zip">
+                </div>
+                <div id="uploadProgressContainer" style="margin-top: 16px; display: none;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span id="uploadStatusText"
+                            style="font-size: 0.6rem; color: var(--text-dim);">Uploading...</span>
+                        <span id="uploadPercentText" style="font-size: 0.6rem; color: var(--accent);">0%</span>
+                    </div>
+                    <div style="height: 4px; background: #000; border-radius: 2px; overflow: hidden;">
+                        <div id="uploadProgressBar"
+                            style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn btn-secondary modal-close-btn" data-modal="uploadModal">Cancel</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Global Scripts -->
+    <script type="module"
+        src="{{ url_for('static', filename='js/modules/playground/playground_bootstrap.js') }}"></script>
+</body>
+
+</html>

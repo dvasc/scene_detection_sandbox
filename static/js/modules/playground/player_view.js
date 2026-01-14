@@ -2,7 +2,7 @@
  * PlayerView.js
  * Playground Video Player Module.
  * Manages media playback, high-contrast overlay synchronization, 
- * and playback-state navigation (skipping shots and scenes).
+ * and playback-state navigation. Supports both Blob URLs and Server Paths.
  */
 
 import { store } from './store.js';
@@ -13,15 +13,20 @@ let overlay = null;
 
 /**
  * Initializes the video element with a source.
- * @param {string} src - The URL of the video file to load.
+ * @param {string} src - The URL (blob or path) of the video file to load.
  */
 export function initPlayer(src) {
     videoPlayer = document.getElementById('videoPlayer');
     overlay = document.getElementById('overlayShotId');
 
     if (!videoPlayer) return;
-    videoPlayer.src = src;
-    videoPlayer.load();
+
+    // Simple check to avoid reloading if src is identical
+    const currentSrc = videoPlayer.getAttribute('src');
+    if (currentSrc !== src) {
+        videoPlayer.src = src;
+        videoPlayer.load();
+    }
 }
 
 /**

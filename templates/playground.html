@@ -259,6 +259,17 @@
 
                     <!-- Step 4: Launch -->
                     <div class="mc-step no-border">
+                        <!-- Auto-Download Toggle -->
+                        <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+                            <div class="force-mode-container"
+                                style="border:none; margin:0; padding:0; background: transparent;">
+                                <input type="checkbox" id="autoDownloadCheck" class="force-checkbox">
+                                <label for="autoDownloadCheck" class="force-label"
+                                    style="margin-left:6px; font-weight: 600; color: var(--text-dim);">Auto-Download
+                                    Archive on Completion</label>
+                            </div>
+                        </div>
+
                         <button id="processBtn" class="btn btn-primary launch-btn" disabled>
                             <span class="launch-text">INITIALIZE MISSION</span>
                             <span class="launch-sub">Awaiting Configuration</span>
@@ -409,7 +420,13 @@
                         <span class="sys-label" style="color: var(--accent);">VLM OUTPUT // EVALUATION</span>
                         <div class="sidebar-title">Forensic Narrative Audit</div>
                     </div>
-                    <div class="sidebar-actions" style="display: grid; grid-template-columns: 1fr 120px; gap: 8px;">
+                    <!-- REVISED GRID: 44px 1fr 120px to fit new download button -->
+                    <div class="sidebar-actions"
+                        style="display: grid; grid-template-columns: 44px 1fr 120px; gap: 8px;">
+                        <button id="downloadActiveSessionBtn" class="btn btn-secondary"
+                            title="Download Session Archive">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
                         <button id="resetPlaygroundBtn" class="btn btn-secondary">
                             <i class="fa-solid fa-rotate-left"></i> Return to Config
                         </button>

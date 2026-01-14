@@ -429,3 +429,38 @@
     color: var(--text-dim);
     border: 1px solid var(--border-light);
 }
+
+/* --- NEW SESSION ACTIONS --- */
+.session-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.session-action-btn {
+    font-size: 0.7rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 4px;
+    border-radius: 2px;
+}
+
+.session-action-btn.delete {
+    color: var(--text-muted);
+}
+
+.session-action-btn.delete:hover {
+    color: var(--danger);
+    background: rgba(255, 0, 60, 0.1);
+}
+
+.session-action-btn.download {
+    color: var(--text-muted);
+}
+
+.session-action-btn.download:hover {
+    color: var(--accent);
+    background: var(--accent-glow);
+}

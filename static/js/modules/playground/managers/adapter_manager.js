@@ -109,6 +109,9 @@ export class AdapterManager {
         const selectedModel = this.els.modelSelect.value;
         const isCloud = window.CLOUD_MODELS && window.CLOUD_MODELS.includes(selectedModel);
 
+        // --- VISIBILITY CHECK: Only show for Qwen family models ---
+        const isQwen = selectedModel && selectedModel.toLowerCase().includes('qwen');
+
         // Reset UI State
         if (this.els.adapterInput) {
             this.els.adapterInput.innerHTML = '<option value="">None (Base Model)</option>';
@@ -117,13 +120,13 @@ export class AdapterManager {
         }
         this.hideHint();
 
-        // 1. Cloud Model or No Selection -> Hide Container
-        if (!selectedModel || isCloud) {
+        // 1. Hide control if irrelevant
+        if (!selectedModel || isCloud || !isQwen) {
             if (this.els.adapterContainer) this.els.adapterContainer.style.display = 'none';
             return;
         }
 
-        // 2. Local Model Selected -> Show Container
+        // 2. Show container for Qwen local models
         if (this.els.adapterContainer) this.els.adapterContainer.style.display = 'block';
 
         const isForce = this.isForceMode();
@@ -139,12 +142,24 @@ export class AdapterManager {
             // FORCE MODE: Show everything
             availableAdapters = this.adapterCache;
         } else {
-            // SAFE MODE: Filter by compatibility
+            // SMART FILTER MODE
             availableAdapters = this.adapterCache.filter(adapter => {
                 if (!adapter.base_model) return false;
+
+                // Strategy 1: Strict Match (Full ID or Basename)
                 const adapterBaseName = getBasename(adapter.base_model);
-                // Strict match OR basename match
-                return adapter.base_model === selectedModel || adapterBaseName === targetBaseName;
+                const strictMatch = (adapter.base_model === selectedModel) || (adapterBaseName === targetBaseName);
+
+                if (strictMatch) return true;
+
+                // Strategy 2: Ecosystem Fuzzy Match
+                // If we are in "Qwen Mode" (isQwen=true), accept any adapter that claims to be for a Qwen model.
+                // This handles cases where the user has 'Qwen2-VL-7B-Int4' but the adapter says 'Qwen2-VL-7B'.
+                if (isQwen && adapter.base_model.toLowerCase().includes('qwen')) {
+                    return true;
+                }
+
+                return false;
             });
         }
 
@@ -161,14 +176,16 @@ export class AdapterManager {
                     label += ` (r=${adapter.rank}, α=${adapter.alpha})`;
                 }
 
-                // Visual indicator for force mode mismatch
-                if (isForce) {
-                    const adapterBaseName = getBasename(adapter.base_model);
-                    const isMatch = adapter.base_model === selectedModel || adapterBaseName === targetBaseName;
-                    if (!isMatch) {
-                        label = `⚠️ ${label}`;
-                        opt.style.color = '#ffb800'; // Warning color
-                    }
+                // Visual indicator for potentially loose matches if we are forcing or fuzzy matching
+                const adapterBaseName = getBasename(adapter.base_model);
+                const strictMatch = (adapter.base_model === selectedModel) || (adapterBaseName === targetBaseName);
+
+                if (!strictMatch && !isForce) {
+                    // It's a "Family Match" -> Add subtle hint
+                    label += " [Family Match]";
+                } else if (isForce && !strictMatch) {
+                    label = `⚠️ ${label}`;
+                    opt.style.color = '#ffb800';
                 }
 
                 opt.textContent = label;
@@ -190,7 +207,7 @@ export class AdapterManager {
             }
         } else {
             const opt = document.createElement('option');
-            opt.textContent = isForce ? "-- Archive Empty --" : "-- No compatible adapters found --";
+            opt.textContent = isForce ? "-- Archive Empty --" : "-- No Qwen adapters found --";
             opt.disabled = true;
             this.els.adapterInput.appendChild(opt);
         }

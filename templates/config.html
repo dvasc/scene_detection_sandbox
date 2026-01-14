@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Data Injection for Frontend Managers -->
+<script>
+    window.CLOUD_MODELS = {{ cloud_models | tojson }};
+    window.ADAPTER_MANIFEST = {{ adapters | tojson }};
+</script>
+
+<main id="mainContainer">
+
+    <!-- STATE 1: MISSION CONTROL CONFIGURATION -->
+    <div id="configView" class="view-state active">
+        <div class="mission-control-layout">
+
+            <!-- COLUMN 1: ASSET HUB (Persistent) -->
+            <div class="mc-column mc-sidebar">
+                <div class="mc-panel asset-hub">
+                    <div class="panel-header">
+                        <i class="fa-solid fa-database"></i> Asset Library
+                    </div>
+                    <div class="asset-actions">
+                        <button id="openImportModalBtn" class="btn btn-secondary btn-sm" style="flex:1;">
+                            <i class="fa-solid fa-cloud-arrow-down"></i> Import Model
+                        </button>
+                        <button id="openUploadModalBtn" class="btn btn-secondary btn-sm" style="flex:1;">
+                            <i class="fa-solid fa-upload"></i> Upload LoRA
+                        </button>
+                    </div>
+                    <div id="assetManagerContainer" class="asset-list-container">
+                        <!-- Populated by JS -->
+                        <div class="sys-label" style="text-align: center; padding: 2rem; opacity: 0.5;">
+                            <i class="fa-solid fa-spinner fa-spin"></i><br>Loading Assets...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mc-panel archive-hub">
+                    <div class="panel-header">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Mission Archive
+                    </div>
+                    <div class="archive-list-container" id="sessionList">
+                        <!-- Populated by JS -->
+                        <div class="sys-label" style="text-align: center; padding: 2rem; opacity: 0.5;">
+                            <i class="fa-solid fa-spinner fa-spin"></i><br>Loading Archive...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUMN 2: WORKFLOW CANVAS (Transient) -->
+            <div class="mc-column mc-canvas">
+
+                <!-- Step 1: Reasoner -->
+                <div class="mc-step">
+                    <div class="step-label">01 // REASONER CONFIGURATION</div>
+                    <div class="step-content">
+                        <div class="form-group">
+                            <label class="config-label">Base Model Checkpoint</label>
+                            <select id="modelSelect" class="dataset-select" style="width: 100%;"
+                                data-inspect="model_select">
+                                <option value="" disabled selected>-- Select Base Model --</option>
+                                {% for model in models %}
+                                <option value="{{ model }}">{{ model }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div id="adapterContainer" class="form-group" style="margin-top: 12px; display: none;">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+                                <label class="config-label">LoRA Adapter</label>
+                                <div class="force-mode-container" style="border:none; margin:0; padding:0;">
+                                    <input type="checkbox" id="forceLoadAdapter" class="force-checkbox">
+                                    <label for="forceLoadAdapter" class="force-label" style="margin-left:6px;"
+                                        data-inspect="force_mode">Force Load</label>
+                                </div>
+                            </div>
+                            <select id="adapterPath" class="dataset-select" style="width: 100%;" disabled
+                                data-inspect="adapter_select">
+                                <option value="">Select Base Model First</option>
+                            </select>
+                            <div id="adapterMetaHint" class="sys-label"
+                                style="font-size:0.55rem; color:var(--text-muted); margin-top:4px; display:none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Media -->
+                <div class="mc-step">
+                    <div class="step-label">02 // SOURCE MEDIA</div>
+                    <div class="step-content">
+                        <div class="upload-area" id="dropZone" style="min-height: 100px; padding: 1.5rem;">
+                            <div id="dropPrompt">
+                                <i class="fa-solid fa-film upload-icon" style="font-size: 1.2rem;"></i>
+                                <div class="upload-text">Drag & Drop Video Source</div>
+                            </div>
+                            <input type="file" id="videoInput" accept="video/*">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Parameters -->
+                <div class="mc-step">
+                    <div class="step-label">03 // EXECUTION PARAMETERS</div>
+                    <div class="step-content parameter-grid">
+
+                        <!-- Sampling Group -->
+                        <div class="param-group">
+                            <div class="group-title">Sampling Strategy</div>
+                            <div class="p-row">
+                                <label class="p-label">Temperature</label>
+                                <input type="number" id="paramTemp" class="p-input" value="{{ defaults.temperature }}"
+                                    step="0.1" min="0" max="2" data-inspect="temp">
+                            </div>
+                            <div class="p-row">
+                                <label class="p-label">Top P</label>
+                                <input type="number" id="paramTopP" class="p-input" value="{{ defaults.top_p }}"
+                                    step="0.05" min="0" max="1" data-inspect="top_p">
+                            </div>
+                        </div>
+
+                        <!-- Generation Group -->
+                        <div class="param-group">
+                            <div class="group-title">Generation Control</div>
+                            <div class="p-row">
+                                <label class="p-label">Max Tokens</label>
+                                <input type="number" id="paramMaxTokens" class="p-input"
+                                    value="{{ defaults.max_tokens }}" step="128" data-inspect="max_tokens">
+                            </div>
+                            <div class="p-row">
+                                <label class="p-label">Rep. Penalty</label>
+                                <input type="number" id="paramRepPenalty" class="p-input"
+                                    value="{{ defaults.repetition_penalty }}" step="0.05" min="1.0" max="2.0"
+                                    data-inspect="rep_penalty">
+                            </div>
+                        </div>
+
+                        <!-- Context Group -->
+                        <div class="param-group full-width">
+                            <div class="group-title">Context & Scaling</div>
+                            <div class="p-row" style="margin-bottom: 8px;">
+                                <label class="p-label">Window Size</label>
+                                <div class="stepper-group" style="flex:1;">
+                                    <button id="winDec" class="step-btn" type="button"><i
+                                            class="fa-solid fa-minus"></i></button>
+                                    <input type="number" id="windowSize" class="stepper-input" value="32" min="8"
+                                        max="128" readonly data-inspect="window_size">
+                                    <button id="winInc" class="step-btn" type="button"><i
+                                            class="fa-solid fa-plus"></i></button>
+                                </div>
+                            </div>
+                            <div class="p-grid-2">
+                                <div>
+                                    <label class="p-label">LoRA Scale</label>
+                                    <input type="number" id="paramLoraScale" class="p-input"
+                                        value="{{ defaults.lora_scale }}" step="0.1" min="0.0" max="2.0"
+                                        data-inspect="lora_scale">
+                                </div>
+                                <div>
+                                    <label class="p-label">Stream Rate</label>
+                                    <input type="number" id="streamInterval" class="p-input"
+                                        value="{{ defaults.stream_interval }}" step="10" min="10" max="500"
+                                        data-inspect="stream_rate">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hardware Mode -->
+                        <div class="param-group full-width"
+                            style="border-color: var(--border-light); background: rgba(0,0,0,0.2);">
+                            <div class="force-mode-container" style="border:none; margin:0; padding:0;">
+                                <input type="checkbox" id="highFidelityMode" class="force-checkbox hifi-checkbox" {% if
+                                    not gpu_capabilities.is_capable %}disabled{% endif %}>
+                                <div style="display:flex; flex-direction:column; margin-left: 8px;">
+                                    <label for="highFidelityMode" class="force-label"
+                                        data-inspect="hifi_mode">High-Fidelity Mode (BF16)</label>
+                                    <span style="font-size:0.55rem; color:var(--text-muted);">
+                                        {% if gpu_capabilities.is_capable %}
+                                        Capable ({{ gpu_capabilities.total_vram_gb }}GB VRAM)
+                                        {% else %}
+                                        Unavailable (< 12GB VRAM) {% endif %} </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prompts (Collapsible) -->
+                        <div class="param-group full-width">
+                            <div class="group-title" id="promptToggle"
+                                style="cursor: pointer; display:flex; justify-content:space-between;">
+                                <span>System & Context Prompts</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div id="promptBody" style="display:none; margin-top: 10px;">
+                                <label class="p-label">System Prompt</label>
+                                <textarea id="paramSystem" class="control-input"
+                                    style="height: 60px; font-size: 0.6rem; margin-bottom: 8px;">{{ defaults.system_prompt }}</textarea>
+
+                                <label class="p-label">Main Template</label>
+                                <textarea id="paramMain" class="control-input"
+                                    style="height: 60px; font-size: 0.6rem;">{{ defaults.main_prompt }}</textarea>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Step 4: Launch -->
+                <div class="mc-step no-border">
+                    <!-- Auto-Download Toggle -->
+                    <div style="display: flex; justify-content: center; margin-bottom: 12px;">
+                        <div class="force-mode-container"
+                            style="border:none; margin:0; padding:0; background: transparent;">
+                            <input type="checkbox" id="autoDownloadCheck" class="force-checkbox">
+                            <label for="autoDownloadCheck" class="force-label"
+                                style="margin-left:6px; font-weight: 600; color: var(--text-dim);">Auto-Download Archive
+                                on Completion</label>
+                        </div>
+                    </div>
+
+                    <button id="processBtn" class="btn btn-primary launch-btn" disabled>
+                        <span class="launch-text">INITIALIZE MISSION</span>
+                        <span class="launch-sub">Awaiting Configuration</span>
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- COLUMN 3: INSPECTOR (Contextual) -->
+            <div class="mc-column mc-inspector">
+                <div class="mc-panel inspector-panel">
+                    <div class="panel-header">
+                        <i class="fa-solid fa-circle-info"></i> Context Inspector
+                    </div>
+                    <div id="inspectorContent" class="inspector-content">
+                        <!-- Dynamic Content -->
+                        <div class="placeholder-state">
+                            <i class="fa-solid fa-crosshairs"></i>
+                            <p>Hover over a parameter or select an asset to view technical details.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mc-panel help-panel">
+                    <div class="panel-header">
+                        <i class="fa-solid fa-book-open"></i> Quick Reference
+                    </div>
+                    <div class="help-content">
+                        <div class="help-item">
+                            <span class="key">Chunking</span>
+                            <span class="val">Sliding window analysis</span>
+                        </div>
+                        <div class="help-item">
+                            <span class="key">Protocol</span>
+                            <span class="val">5-Stage Forensic Audit</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</main>
+{% endblock %}

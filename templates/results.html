@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main id="mainContainer">
+    <!-- STATE 3: RESULTS -->
+    <div id="resultsView" class="view-state results-layout active">
+        <div class="video-column">
+            <div class="video-container">
+                <video id="videoPlayer" controls preload="auto"></video>
+                <div id="videoOverlay"><span id="overlayShotId"></span></div>
+            </div>
+            <div class="control-deck">
+                <div class="nav-group">
+                    <button class="nav-btn" onclick="window.skipToScene(-1)" title="Prev Scene"><i
+                            class="fa-solid fa-backward-fast"></i></button>
+                    <button class="nav-btn" onclick="window.skipToShot(-1)" title="Prev Shot"><i
+                            class="fa-solid fa-backward-step"></i></button>
+                </div>
+                <div class="deck-separator"></div>
+                <div class="nav-group">
+                    <button class="nav-btn" onclick="window.skipToShot(1)" title="Next Shot"><i
+                            class="fa-solid fa-forward-step"></i></button>
+                    <button class="nav-btn" onclick="window.skipToScene(1)" title="Next Scene"><i
+                            class="fa-solid fa-forward-fast"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar" style="position: relative;">
+            <div class="sidebar-sticky-header">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.8rem;">
+                    <span class="sys-label" style="color: var(--accent);">VLM OUTPUT // EVALUATION</span>
+                    <div class="sidebar-title">Forensic Narrative Audit</div>
+                </div>
+                <!-- REVISED GRID: 44px 1fr 120px to fit new download button -->
+                <div class="sidebar-actions" style="display: grid; grid-template-columns: 44px 1fr 120px; gap: 8px;">
+                    <button id="downloadActiveSessionBtn" class="btn btn-secondary" title="Download Session Archive">
+                        <i class="fa-solid fa-download"></i>
+                    </button>
+                    <button id="resetPlaygroundBtn" class="btn btn-secondary"
+                        onclick="window.location.href='/playground/config'">
+                        <i class="fa-solid fa-rotate-left"></i> Return to Config
+                    </button>
+                    <button id="toggleDebugBtn" class="btn btn-secondary">
+                        <i class="fa-solid fa-terminal"></i> Debug
+                    </button>
+                </div>
+            </div>
+            <div id="shotGrid" class="read-only-grid"></div>
+            <div id="debugPanel" class="debug-panel">
+                <div class="debug-tabs">
+                    <div class="debug-tab active" data-log="pipeline">Pipeline Trace</div>
+                    <div class="debug-tab" data-log="logs">VLM Interaction Logs</div>
+                </div>
+                <div id="debugContent" class="debug-content"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    window.SESSION_ID = "{{ session_id }}";
+    window.VIDEO_FILENAME = "{{ video_filename }}";
+</script>
+{% endblock %}

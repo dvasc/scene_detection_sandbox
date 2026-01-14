@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main id="mainContainer">
+    <!-- STATE 2: PIPELINE MONITORING -->
+    <div id="processingView" class="view-state active">
+        <div class="monitor-deck">
+            <!-- Left Flank: System Vitals -->
+            <div class="monitor-flank left">
+                <!-- CPU Widget -->
+                <div class="monitor-widget primary">
+                    <div class="monitor-label">
+                        <i class="fa-solid fa-microchip"></i> CPU CORE
+                    </div>
+                    <div class="monitor-main">
+                        <div class="monitor-val" id="monitorCpuVal">--%</div>
+                        <div class="monitor-bar-track">
+                            <div class="monitor-bar-fill" id="monitorCpuBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAM Widget -->
+                <div class="monitor-widget">
+                    <div class="monitor-label">
+                        <i class="fa-solid fa-memory"></i> SYSTEM RAM
+                    </div>
+                    <div class="monitor-main">
+                        <div class="monitor-val" id="monitorRamVal">--%</div>
+                        <div class="monitor-bar-track">
+                            <div class="monitor-bar-fill" id="monitorRamBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="monitor-detail" id="monitorRamDetail">-- / -- GB</div>
+                </div>
+
+                <!-- Disk Widget -->
+                <div class="monitor-widget">
+                    <div class="monitor-label">
+                        <i class="fa-solid fa-hard-drive"></i> STORAGE (LOCAL)
+                    </div>
+                    <div class="monitor-main">
+                        <div class="monitor-val" id="monitorDiskVal">--%</div>
+                        <div class="monitor-bar-track">
+                            <div class="monitor-bar-fill" id="monitorDiskBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="monitor-detail" id="monitorDiskDetail">-- / -- GB</div>
+                </div>
+
+                <!-- GPU Container -->
+                <div id="monitorGpuContainer" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- GPU specific widgets injected by JS -->
+                </div>
+            </div>
+
+            <!-- Center: Terminal Area -->
+            <div class="terminal-wrapper">
+                <!-- Stop Button -->
+                <div class="abort-container">
+                    <button id="abortBtn" class="btn btn-danger">
+                        <i class="fa-solid fa-ban"></i> Stop Execution
+                    </button>
+                </div>
+
+                <!-- Terminal Card -->
+                <div class="terminal-card">
+                    <div class="terminal-header">
+                        <div class="term-dots"><span></span><span></span><span></span></div>
+                        <span class="term-title">playground_inference_pipeline.log</span>
+                    </div>
+                    <div class="terminal-body" id="consoleLog"></div>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    window.ACTIVE_TASK_ID = "{{ task_id }}";
+    window.AUTO_DOWNLOAD = {{ 'true' if auto_download else 'false' }};
+</script>
+{% endblock %}

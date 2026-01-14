@@ -1,14 +1,20 @@
 import os
 import json
-from flask import render_template
+from flask import render_template, redirect, url_for, request, jsonify
 from src.config import Config, AVAILABLE_MODELS
 from src.core.engines.qwen.diagnostics import check_gpu_capacity
+from src.workers.utils import TASK_STATUS
 from . import playground_bp
 
 @playground_bp.route('/playground')
 def index():
+    """Redirect root access to config view."""
+    return redirect(url_for('playground.config'))
+
+@playground_bp.route('/playground/config')
+def config():
     """
-    Renders the Playground evaluation interface.
+    Renders the Mission Control interface (Config View).
     Performs model discovery and hardware capability checks.
     """
     models_dir = os.path.join(Config.BASE_DIR, 'models')
@@ -80,17 +86,60 @@ def index():
         'repetition_penalty': Config.INFERENCE_REPETITION_PENALTY,
         'system_prompt': Config.INFERENCE_SYSTEM_PROMPT,
         'main_prompt': Config.INFERENCE_PROMPT,
-        'lora_scale': 0.1,      # UPDATED DEFAULT
-        'stream_interval': 100  # UPDATED DEFAULT
+        'lora_scale': 0.1,
+        'stream_interval': 100
     }
 
     gpu_status = check_gpu_capacity(required_vram_gb=12.0)
 
     return render_template(
-        'playground.html', 
+        'config.html', 
         models=combined_models, 
         adapters=local_adapters, 
         cloud_models=AVAILABLE_MODELS,
         defaults=inference_defaults,
         gpu_capabilities=gpu_status 
     )
+
+@playground_bp.route('/playground/processing/<task_id>')
+def processing(task_id):
+    """
+    Renders the Monitoring Deck (Processing View).
+    """
+    # Check if auto-download was requested via query param
+    auto_dl = request.args.get('auto_download') == 'true'
+    return render_template('monitor.html', task_id=task_id, auto_download=auto_dl)
+
+@playground_bp.route('/playground/results/<session_id>')
+def results(session_id):
+    """
+    Renders the Forensic Narrative Audit (Results View).
+    Hydrates state from disk.
+    """
+    session_dir = os.path.join(Config.PLAYGROUND_FOLDER, session_id)
+    if not os.path.exists(session_dir):
+        return redirect(url_for('playground.config'))
+
+    # Attempt to resolve video filename for player source
+    video_filename = "unknown.mp4"
+    ssot_path = os.path.join(session_dir, 'model_interaction.json')
+    
+    if os.path.exists(ssot_path):
+        try:
+            with open(ssot_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                video_filename = data.get('session_metadata', {}).get('video_filename', video_filename)
+        except:
+            pass
+    else:
+        # Fallback to legacy
+        legacy_path = os.path.join(session_dir, 'state.json')
+        if os.path.exists(legacy_path):
+            try:
+                with open(legacy_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    video_filename = data.get('metadata', {}).get('video_filename', video_filename)
+            except:
+                pass
+
+    return render_template('results.html', session_id=session_id, video_filename=video_filename)
