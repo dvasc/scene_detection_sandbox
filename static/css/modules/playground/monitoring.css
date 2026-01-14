@@ -1,0 +1,145 @@
+/**
+ * Hardware Monitoring Deck Styles
+ * Handles system vitals display during processing
+ */
+
+/* =========================================
+   MONITORING DECK (Hardware Stats)
+   ========================================= */
+.monitor-deck {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    /* 2 Columns now */
+    gap: 32px;
+    width: 100%;
+    max-width: 1400px;
+    height: 100%;
+    overflow: hidden;
+    margin: 0 auto;
+    padding: 0 24px;
+    align-items: center;
+    /* Center Vertically */
+}
+
+.monitor-flank.left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 0;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+/* Scrollbar for left flank if it gets too tall */
+.monitor-flank.left::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+.terminal-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: 100%;
+    justify-content: center;
+}
+
+.abort-container {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 0;
+}
+
+.terminal-card {
+    background: #050505;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    height: 500px;
+    /* Fixed optimal height */
+    max-height: 80vh;
+}
+
+.monitor-widget {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.monitor-widget.primary {
+    border-color: var(--accent-dim);
+    background: rgba(0, 255, 157, 0.03);
+}
+
+.monitor-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.monitor-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.monitor-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.monitor-bar-track {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.monitor-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.monitor-detail {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    text-align: right;
+}
+
+/* Ensure progress bar is tight to bottom */
+.progress-container {
+    height: 4px;
+    background: #000;
+    width: 100%;
+    margin-top: auto;
+    /* Push to bottom */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .monitor-deck {
+        grid-template-columns: 240px 1fr;
+    }
+}

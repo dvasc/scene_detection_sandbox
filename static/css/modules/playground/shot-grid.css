@@ -1,0 +1,492 @@
+/**
+ * Shot Grid Component Styles
+ * Handles shot grid layout, shot cards, scene headers, and related components
+ */
+
+/* Status Indicators */
+#saveStatus {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+/* Headers */
+h2 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: var(--spacing-sm);
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    font-weight: 900;
+}
+
+/* HIGH-CONTRAST OVERLAY */
+#videoOverlay {
+    position: absolute;
+    top: 2.5rem;
+    left: 2.5rem;
+    pointer-events: none;
+    z-index: 10;
+}
+
+#overlayShotId {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: var(--accent);
+    font-weight: 800;
+    font-family: monospace;
+    font-size: 0.9rem;
+    border: 1px solid var(--accent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    display: none;
+}
+
+/* MAIN SCROLLABLE GRID */
+#shotGrid {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    align-content: start;
+}
+
+#shotGrid::-webkit-scrollbar {
+    width: 6px;
+}
+
+#shotGrid::-webkit-scrollbar-track {
+    background: var(--sidebar-bg);
+}
+
+#shotGrid::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 3px;
+}
+
+/* --- REFINED SCENE UNIT HEADERS --- */
+.scene-header-card {
+    grid-column: 1 / -1;
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(24, 24, 27, 0.4) 100%);
+    backdrop-filter: blur(8px);
+    border-left: 3px solid var(--success);
+    border-top: 1px solid var(--border-light);
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.scene-header-card:hover {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(24, 24, 27, 0.6) 100%);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.scene-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.scene-title select.mini-select {
+    flex: 0 1 240px;
+    height: 26px;
+    background-color: #09090b;
+    border-color: var(--border);
+    font-weight: 800;
+}
+
+.scene-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.scene-index {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: var(--success);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.scene-meta {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    font-weight: 700;
+    padding-left: 1rem;
+    border-left: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.reasoning-toggle-btn {
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.15s ease;
+}
+
+.reasoning-toggle-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.05);
+}
+
+.scene-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    justify-content: flex-end;
+}
+
+.scene-toolbar-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 0.75rem;
+}
+
+.scene-toolbar-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.1);
+}
+
+.reasoning-box {
+    display: none;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    background: rgba(0, 0, 0, 0.4);
+    padding: 1rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    line-height: 1.5;
+    overflow-y: auto;
+    max-height: 140px;
+    padding-right: 6px;
+    border-left: none;
+}
+
+.reasoning-box.open {
+    display: block;
+}
+
+.reasoning-box.scene-level {
+    border-left: 2px solid var(--success);
+    color: var(--text-main);
+    font-size: 0.7rem;
+    border-radius: 0;
+    padding-left: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.reasoning-box::-webkit-scrollbar {
+    width: 3px;
+}
+
+.reasoning-box::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+/* --- SHOT CARDS --- */
+.shot-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    backdrop-filter: blur(4px);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.shot-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: var(--border);
+    transition: 0.2s;
+    z-index: 5;
+}
+
+.shot-card.is-dirty {
+    border-left: none;
+}
+
+.shot-card.is-dirty::before {
+    background: var(--warning);
+    box-shadow: 0 0 10px var(--warning);
+}
+
+.shot-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg), 0 0 15px rgba(0, 240, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.shot-card:hover::before {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+}
+
+.shot-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 0 30px var(--accent-glow);
+    z-index: 10;
+}
+
+.shot-card.is-break {
+    border-color: var(--break-border);
+}
+
+.card-header {
+    padding: 0.5rem 0.8rem;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.65rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.thumb-container {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #000;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.thumb-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 2;
+    opacity: 0.8;
+    transition: 0.2s;
+}
+
+.shot-card:hover .thumb-container img {
+    opacity: 1;
+}
+
+.overlay-toggle-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+.overlay-toggle-btn:hover {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.control-row {
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+}
+
+.control-row select.mini-select {
+    flex: 1;
+    height: 24px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-color: var(--border);
+    font-size: 0.65rem;
+    border-radius: 2px;
+}
+
+.toggle-input {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: var(--break-border);
+    margin: 0;
+}
+
+.card-body {
+    padding: 0.8rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.01) 0%, rgba(0, 0, 0, 0.2) 100%);
+}
+
+.meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.meta-label {
+    font-size: 0.5rem;
+    font-weight: 800;
+    color: var(--accent-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: block;
+}
+
+.meta-value {
+    font-size: 0.7rem;
+    color: var(--text-main);
+    line-height: 1.3;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.scroll-box {
+    max-height: 60px;
+    overflow-y: auto;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    background: rgba(0, 0, 0, 0.4);
+    padding: 6px 8px;
+    border-radius: 4px;
+    line-height: 1.5;
+    border: 1px solid var(--border-light);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.scroll-box::-webkit-scrollbar {
+    width: 2px;
+}
+
+.scroll-box::-webkit-scrollbar-thumb {
+    background: var(--accent-dim);
+}
+
+.metadata-view,
+.reasoning-view {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+}
+
+.reasoning-view {
+    display: none;
+}
+
+.shot-card.view-reasoning .metadata-view {
+    display: none;
+}
+
+.shot-card.view-reasoning .reasoning-view {
+    display: flex;
+}
+
+/* Read-only grid modifications */
+.read-only-grid .toggle-input {
+    display: none !important;
+}
+
+.read-only-grid .mini-select {
+    pointer-events: none;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    background-image: none !important;
+    color: var(--accent) !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 0.65rem !important;
+    text-align: right;
+}
+
+.read-only-grid .overlay-toggle-btn {
+    display: none !important;
+}
+
+.read-only-grid .shot-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: var(--border) !important;
+}
+
+.read-only-grid .shot-card.active {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent), 0 0 20px var(--accent-glow) !important;
+    z-index: 5;
+}
+
+.read-only-grid {
+    padding: 2rem;
+    gap: 2rem;
+}

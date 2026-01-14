@@ -1,0 +1,431 @@
+/**
+ * Mission Control Layout Styles
+ * Handles configuration view, panels, and workflow canvas
+ */
+
+/* --- VIEW STATE MANAGEMENT --- */
+#mainContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: transparent;
+}
+
+.view-state {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 24px;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.view-state.active {
+    display: flex;
+    opacity: 1;
+    z-index: 10;
+}
+
+.view-state.results-layout {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 0;
+}
+
+/* --- STATE 1: MISSION CONTROL LAYOUT --- */
+.mission-control-layout {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    gap: 20px;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+.mc-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 0;
+}
+
+.mc-panel {
+    background: var(--card-bg);
+    border: var(--glass-border);
+    backdrop-filter: var(--glass-backdrop);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+.mc-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.3;
+}
+
+.panel-header {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.panel-header i {
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+.asset-hub {
+    flex-shrink: 0;
+}
+
+.asset-actions {
+    padding: 1rem;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.archive-hub {
+    flex: 1;
+    min-height: 0;
+}
+
+.archive-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.mc-canvas {
+    gap: 0;
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 2rem;
+    overflow-y: auto;
+    justify-content: flex-start;
+}
+
+.mc-step {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px dashed var(--border);
+    animation: fadeIn 0.4s ease-out;
+}
+
+.mc-step.no-border {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.step-label {
+    font-size: 0.6rem;
+    font-weight: 900;
+    color: var(--accent-dim);
+    margin-bottom: 1rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.step-content {
+    padding-left: 0.5rem;
+}
+
+.parameter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.param-group {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.param-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.group-title {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 4px;
+}
+
+.p-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.p-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.p-input {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: 80px;
+    text-align: right;
+    transition: 0.2s;
+}
+
+.p-input:focus {
+    border-color: var(--accent);
+    outline: none;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.p-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.launch-btn {
+    width: 100%;
+    height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: var(--radius-md);
+    background: var(--accent);
+    color: #000;
+    border: none;
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+    transition: all 0.2s;
+}
+
+.launch-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(0, 240, 255, 0.4);
+    background: #fff;
+}
+
+.launch-btn:disabled {
+    background: #1a1a1c;
+    color: #444;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.launch-text {
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+}
+
+.launch-sub {
+    font-size: 0.6rem;
+    font-weight: 600;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.inspector-panel {
+    flex: 1;
+}
+
+.inspector-content {
+    padding: 1.5rem;
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: var(--text-dim);
+}
+
+.placeholder-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    opacity: 0.3;
+    text-align: center;
+    gap: 1rem;
+}
+
+.placeholder-state i {
+    font-size: 2rem;
+}
+
+.info-tile {
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.info-label {
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 800;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.info-val {
+    font-size: 0.8rem;
+    color: var(--text-main);
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+}
+
+.info-desc {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-light);
+}
+
+.help-panel {
+    height: 180px;
+    flex-shrink: 0;
+}
+
+.help-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.help-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 4px;
+}
+
+.help-item .key {
+    color: var(--text-muted);
+}
+
+.help-item .val {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.session-item {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    padding: 0.8rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.session-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: var(--accent);
+    opacity: 0;
+    transition: 0.2s;
+}
+
+.session-item:hover {
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.session-item:hover::after {
+    opacity: 1;
+}
+
+.s-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.s-name {
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: var(--text-main);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+.s-date {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+}
+
+.s-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.s-tag {
+    font-size: 0.55rem;
+    padding: 2px 6px;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-dim);
+    border: 1px solid var(--border-light);
+}
