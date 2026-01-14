@@ -113,10 +113,8 @@ async function hydrateResultsView(sessionId) {
         player.initPlayer(videoSrc);
         player.syncPlayer();
 
-        // Update HUD
-        const perf = data.metadata.performance || {};
-        const duration = perf.total_task ? perf.total_task.toFixed(1) + 's' : 'PERSISTED';
-        ui.updateHUD(duration, data.metadata.model_id || 'Unknown');
+        // Update HUD with Rich Metadata
+        ui.updateHUD(data.metadata);
 
         // Load initial logs
         activeLogs = await api.fetchSessionLogs(sessionId);

@@ -33,19 +33,50 @@ header {
 .stats-hud {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 8px;
     background: rgba(0, 0, 0, 0.3);
-    padding: 0.5rem 1.5rem;
+    padding: 0.5rem 1rem;
     border-radius: 10px;
     border: 1px solid var(--border-light);
     margin-left: auto;
     transition: opacity 0.3s ease;
+    max-width: 50vw;
+    overflow-x: auto;
+    white-space: nowrap;
+    /* Custom Scrollbar for HUD */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
 
+.stats-hud::-webkit-scrollbar {
+    height: 4px;
+}
+
+.stats-hud::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+/* Reuse s-tag styles in header context with slight tweaks */
+.stats-hud .s-tag {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    font-size: 0.6rem;
+    color: var(--text-main);
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Legacy HUD Items (for backward compat if needed, though we are replacing logic) */
 .hud-item {
     display: flex;
     flex-direction: column;
     align-items: center;
+    display: none;
+    /* Hidden in favor of new tag system */
 }
 
 .hud-val {
@@ -72,6 +103,7 @@ header {
     height: 20px;
     background: var(--border);
     margin: 0 0.25rem;
+    display: none;
 }
 
 /* --- MAIN WORKSPACE SPLIT --- */
