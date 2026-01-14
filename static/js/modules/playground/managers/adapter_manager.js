@@ -2,6 +2,7 @@
  * Adapter Manager
  * Handles the logic for fetching, filtering, selecting, and displaying adapter options.
  * Integrates with the new Inspector Panel for context-aware feedback.
+ * Persists user selection via LocalStorage to survive page refreshes.
  */
 
 import * as api from '../service.js';
@@ -19,6 +20,7 @@ export class AdapterManager {
 
         // Cache for adapter metadata
         this.adapterCache = window.ADAPTER_MANIFEST || [];
+        this.STORAGE_KEY = 'playground_active_adapter';
 
         this.init();
     }
@@ -68,10 +70,14 @@ export class AdapterManager {
 
     /**
      * Updates the Inspector panel based on current selection.
+     * Persists the selection to LocalStorage.
      */
     handleSelection() {
         const sel = this.els.adapterInput;
         if (!sel || sel.selectedIndex < 0) return;
+
+        // Persist the choice
+        localStorage.setItem(this.STORAGE_KEY, sel.value);
 
         const opt = sel.options[sel.selectedIndex];
 
@@ -97,6 +103,7 @@ export class AdapterManager {
     /**
      * Updates the adapter dropdown options based on the selected base model
      * and the state of the Force Load checkbox.
+     * Restores previous selection if valid.
      */
     updateOptions() {
         const selectedModel = this.els.modelSelect.value;
@@ -170,6 +177,17 @@ export class AdapterManager {
 
                 this.els.adapterInput.appendChild(opt);
             });
+
+            // RESTORE STATE: Check if we have a saved adapter that matches one in this list
+            const savedAdapter = localStorage.getItem(this.STORAGE_KEY);
+            if (savedAdapter) {
+                const optionExists = Array.from(this.els.adapterInput.options).some(o => o.value === savedAdapter);
+                if (optionExists) {
+                    this.els.adapterInput.value = savedAdapter;
+                    // Trigger UI updates (Inspector) manually since setting value via JS doesn't fire 'change'
+                    this.handleSelection();
+                }
+            }
         } else {
             const opt = document.createElement('option');
             opt.textContent = isForce ? "-- Archive Empty --" : "-- No compatible adapters found --";

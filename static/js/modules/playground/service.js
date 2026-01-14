@@ -78,7 +78,7 @@ export async function pollTaskStatus(taskId) {
 
 /**
  * Fetches the dynamic list of available VLM models (cloud + local).
- * @returns {Promise<Array<string>>} List of model IDs.
+ * @returns {Promise<Object>} Object with 'cloud' and 'local' model lists.
  */
 export async function fetchModels() {
     return await api.get('/api/playground/models/list');
@@ -108,4 +108,20 @@ export async function importModel(modelId) {
  */
 export async function uploadAdapter(formData) {
     return await api.post('/api/playground/adapters/upload', formData);
+}
+
+/**
+ * Deletes a local model checkpoint from the server.
+ * @param {string} modelId - The Hugging Face repo ID.
+ */
+export async function deleteModelApi(modelId) {
+    return await api.post('/api/playground/models/delete', { id: modelId });
+}
+
+/**
+ * Deletes a local adapter from the server.
+ * @param {string} adapterId - The folder name of the adapter.
+ */
+export async function deleteAdapterApi(adapterId) {
+    return await api.post('/api/playground/adapters/delete', { id: adapterId });
 }

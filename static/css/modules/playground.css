@@ -673,20 +673,6 @@ h2 {
     border-bottom: 1px solid var(--border-light);
 }
 
-.asset-stats {
-    padding: 0.8rem 1.25rem;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    font-family: 'JetBrains Mono', monospace;
-}
-
-.asset-stats .val {
-    color: var(--text-main);
-    font-weight: 700;
-}
-
 .archive-hub {
     flex: 1;
     min-height: 0;
@@ -704,7 +690,7 @@ h2 {
 
 .mc-canvas {
     gap: 0;
-    background: rgba(255, 255, 255, 0.01);
+    background: var(--card-bg);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     padding: 2rem;
@@ -869,7 +855,6 @@ h2 {
     opacity: 0.3;
     text-align: center;
     gap: 1rem;
-    margin-top: 4rem;
 }
 
 .placeholder-state i {
@@ -1006,6 +991,99 @@ h2 {
     color: var(--text-dim);
     border: 1px solid var(--border-light);
 }
+
+/* --- ASSET MANAGER --- */
+.asset-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.asset-group-header {
+    padding: 10px 12px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: 0.2s;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border);
+}
+
+.asset-group-header:hover {
+    color: var(--text-main);
+}
+
+.asset-group-header i {
+    transition: transform 0.2s ease-in-out;
+}
+
+.asset-group-header.collapsed i {
+    transform: rotate(-90deg);
+}
+
+.asset-list {
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    gap: 4px;
+    max-height: 500px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease-in-out;
+}
+
+.asset-list.collapsed {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0;
+}
+
+.asset-item {
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+.asset-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.asset-delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    opacity: 0.3;
+    transition: 0.2s;
+}
+
+.asset-item:hover .asset-delete-btn {
+    opacity: 1;
+}
+
+.asset-delete-btn:hover {
+    color: var(--danger);
+}
+
 
 /* --- STATE 2: TERMINAL SIMULATION --- */
 /* --- STATE 2: TERMINAL SIMULATION --- */

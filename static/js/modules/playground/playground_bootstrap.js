@@ -52,8 +52,8 @@ function init() {
     // Asset Manager handles dynamic imports and uploads
     // It provides callbacks to refresh other components when assets change
     assetMgr = new AssetManager({
-        onAdapterAdded: async () => {
-            console.log("[Bootstrap] Adapter added, refreshing list...");
+        onAdapterChange: async () => {
+            console.log("[Bootstrap] Asset change detected, refreshing adapter manager...");
             await adapterMgr.refreshList();
         }
     });

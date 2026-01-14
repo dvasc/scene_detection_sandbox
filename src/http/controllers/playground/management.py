@@ -3,12 +3,19 @@ import json
 import uuid
 import zipfile
 import shutil
+import re
 from flask import jsonify, request
 from src.config import Config, AVAILABLE_MODELS
 from src.workers.executor import executor, run_model_download_task
 from . import playground_bp
 
 # --- UTILITIES ---
+
+def is_safe_path(base, path, follow_symlinks=True):
+    """Checks if a path is safely within a base directory."""
+    if follow_symlinks:
+        return os.path.realpath(path).startswith(os.path.realpath(base))
+    return os.path.abspath(path).startswith(os.path.abspath(base))
 
 def scan_local_models():
     """Scans the models directory for Hugging Face snapshots."""
@@ -80,7 +87,7 @@ def scan_local_adapters():
             
     return local_adapters
 
-# --- ENDPOINTS ---
+# --- API ENDPOINTS ---
 
 @playground_bp.route('/api/playground/models/list', methods=['GET'])
 def list_models():
@@ -96,7 +103,7 @@ def list_models():
             unique_models.append(m)
             seen.add(m)
             
-    return jsonify(unique_models)
+    return jsonify({ 'cloud': AVAILABLE_MODELS, 'local': local })
 
 @playground_bp.route('/api/playground/adapters/list', methods=['GET'])
 def list_adapters():
@@ -122,6 +129,36 @@ def import_model():
         'task_id': task_id,
         'message': f"Download queued for {model_id}"
     }), 202
+
+@playground_bp.route('/api/playground/models/delete', methods=['POST'])
+def delete_model():
+    """Deletes a locally cached Hugging Face model."""
+    data = request.get_json()
+    model_id = data.get('id')
+    
+    if not model_id:
+        return jsonify({'error': 'Model ID is required.'}), 400
+
+    if model_id in AVAILABLE_MODELS:
+        return jsonify({'error': 'Cannot delete cloud-based API models.'}), 400
+
+    models_root = os.path.join(Config.BASE_DIR, 'models')
+    # Convert HF ID to directory name: org/repo -> models--org--repo
+    safe_name = model_id.replace('/', '--')
+    folder_name = f"models--{safe_name}"
+    target_dir = os.path.join(models_root, folder_name)
+
+    if not is_safe_path(models_root, target_dir):
+        return jsonify({'error': 'Invalid or malicious path detected.'}), 400
+
+    if not os.path.exists(target_dir):
+        return jsonify({'error': 'Model directory not found.'}), 404
+
+    try:
+        shutil.rmtree(target_dir)
+        return jsonify({'status': 'success', 'message': f'Model {model_id} deleted.'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to delete model: {str(e)}'}), 500
 
 @playground_bp.route('/api/playground/adapters/upload', methods=['POST'])
 def upload_adapter():
@@ -190,3 +227,28 @@ def upload_adapter():
             shutil.rmtree(target_dir)
             
         return jsonify({'error': f"Extraction failed: {str(e)}"}), 500
+
+@playground_bp.route('/api/playground/adapters/delete', methods=['POST'])
+def delete_adapter():
+    """Deletes a locally stored LoRA adapter."""
+    data = request.get_json()
+    adapter_id = data.get('id')
+    
+    if not adapter_id:
+        return jsonify({'error': 'Adapter ID is required.'}), 400
+
+    adapters_root = os.path.join(Config.BASE_DIR, 'models', 'model_adapters')
+    # adapter_id is the directory name itself
+    target_dir = os.path.join(adapters_root, adapter_id)
+
+    if not is_safe_path(adapters_root, target_dir):
+        return jsonify({'error': 'Invalid or malicious path detected.'}), 400
+
+    if not os.path.exists(target_dir):
+        return jsonify({'error': 'Adapter directory not found.'}), 404
+        
+    try:
+        shutil.rmtree(target_dir)
+        return jsonify({'status': 'success', 'message': f'Adapter {adapter_id} deleted.'}), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to delete adapter: {str(e)}'}), 500

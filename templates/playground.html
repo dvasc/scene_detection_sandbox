@@ -68,14 +68,10 @@
                                 <i class="fa-solid fa-upload"></i> Upload LoRA
                             </button>
                         </div>
-                        <div class="asset-stats">
-                            <div class="stat-row">
-                                <span>Base Models</span>
-                                <span class="val">{{ models|length }}</span>
-                            </div>
-                            <div class="stat-row">
-                                <span>Adapters</span>
-                                <span class="val">{{ adapters|length }}</span>
+                        <div id="assetManagerContainer" class="asset-list-container">
+                            <!-- Populated by JS -->
+                            <div class="sys-label" style="text-align: center; padding: 2rem; opacity: 0.5;">
+                                <i class="fa-solid fa-spinner fa-spin"></i><br>Loading Assets...
                             </div>
                         </div>
                     </div>
