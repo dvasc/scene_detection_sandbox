@@ -100,17 +100,17 @@ class GranularLogger:
     
     def log_scene_detect_start(self, video_path: str, fps: float, total_frames: int):
         self.push_context('pyscenedetect_init', video=video_path, fps=fps, frames=total_frames)
-        self.log('SCENE_DETECT', f"Loading source: {os.path.basename(video_path)} ({total_frames} frames @ {fps}fps)")
+        self.log('SHOT_DETECT', f"Loading source: {os.path.basename(video_path)} ({total_frames} frames @ {fps}fps)")
     
     def log_scene_detect_threshold(self, threshold: float):
-        self.log('SCENE_DETECT', f"Shot detection threshold configured: {threshold}")
+        self.log('SHOT_DETECT', f"Shot detection threshold configured: {threshold}")
     
     def log_scene_detect_boundary(self, frame_num: int, score: float, fps: float, is_cut: bool = True):
         timestamp_sec = frame_num / fps
-        self.log('SCENE_DETECT', f"🎬 Boundary detected at frame {frame_num} ({timestamp_sec:.2f}s)")
+        self.log('SHOT_DETECT', f"🎬 Boundary detection at frame {frame_num} ({timestamp_sec:.2f}s)")
     
     def log_scene_detect_complete(self, shots_found: int, elapsed_ms: float):
-        self.log('SCENE_DETECT', f"✓ Analysis complete. {shots_found} shots identified.")
+        self.log('SHOT_DETECT', f"✓ Analysis complete. {shots_found} shots identified.")
         self.pop_context('COMPLETE', shots_found=shots_found, elapsed_ms=round(elapsed_ms))
     
     # ========== VLM INFERENCE FACADES ==========

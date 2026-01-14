@@ -80,8 +80,13 @@ class CVEngine:
     @staticmethod
     def generate_visual_anchors(video_path, shots, session_folder, logger=None):
         """
-        Extracts midpoint frames for every detected shot.
-        Resizes images for VLM context windows and burns in high-contrast ID labels.
+        Extracts representative frames for every detected shot with a robust 3-tier fallback strategy.
+        Guarantees 100% frame generation or raises an error to prevent data corruption.
+        
+        Strategies:
+        1. Exact Midpoint (Ideal representation)
+        2. Jitter Search (Radius +/- 5 frames from midpoint)
+        3. Absolute Start Frame (High probability keyframe/I-frame)
         """
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
@@ -96,46 +101,103 @@ class CVEngine:
 
         for idx, shot in enumerate(shots):
             shot_id = shot["shot_id"]
-            shot_images = []
+            start_f = shot["start_frame"]
+            end_f = shot["end_frame"]
             
-            # Extract the absolute midpoint frame of the shot
-            mid_idx = (shot["start_frame"] + shot["end_frame"]) // 2
-
-            cap.set(cv2.CAP_PROP_POS_FRAMES, mid_idx)
-            ret, frame = cap.read()
+            # --- STRATEGY DEFINITION ---
+            mid_idx = (start_f + end_f) // 2
             
-            if ret:
-                # 1. Geometry Normalization
-                height, width = frame.shape[:2]
-                scale = Config.IMAGE_WIDTH / float(width)
-                target_h = int(height * scale)
-                frame = cv2.resize(frame, (Config.IMAGE_WIDTH, target_h), interpolation=cv2.INTER_AREA)
+            # Tier 1: Primary Target (Midpoint)
+            candidates = [(mid_idx, "Strategy 1: Midpoint")]
+            
+            # Tier 2: Jitter Search (Search outwards from midpoint)
+            # Useful if the midpoint lands on a corrupt frame
+            for offset in range(1, 6):
+                lower = mid_idx - offset
+                upper = mid_idx + offset
+                if lower >= start_f:
+                    candidates.append((lower, f"Strategy 2: Jitter ({lower})"))
+                if upper < end_f:
+                    candidates.append((upper, f"Strategy 2: Jitter ({upper})"))
+            
+            # Tier 3: Absolute Fallback (Start Frame)
+            # Usually aligns with an I-frame/Keyframe, highest read success probability
+            if start_f != mid_idx:
+                candidates.append((start_f, "Strategy 3: Start Frame"))
 
-                # 2. Visual Grounding: Burn Shot ID into the pixels
-                # This ensures the VLM can explicitly reference the ID seen in the image.
-                text = f"SHOT ID: {shot_id}"
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                (text_w, text_h), baseline = cv2.getTextSize(text, font, 0.5, 1)
-                x, y = 8, 25 
+            # --- EXECUTION ---
+            extracted_frame = None
+            success_meta = None
+            
+            for frame_idx, strategy_name in candidates:
+                # Seek and Read
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+                ret, frame = cap.read()
                 
-                # Draw white backing box for readability
-                cv2.rectangle(frame, (x - 4, y - text_h - 6), (x + text_w + 4, y + 4), (255, 255, 255), cv2.FILLED)
-                # Draw black text
-                cv2.putText(frame, text, (x, y), font, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+                # Verify Validity
+                if ret and frame is not None and frame.size > 0:
+                    extracted_frame = frame
+                    success_meta = (frame_idx, strategy_name)
+                    break # Success: Exit candidate loop
+            
+            # --- VALIDATION ---
+            if extracted_frame is None:
+                # Total Failure: File is likely corrupt at this segment.
+                # We must fail hard to prevent silent data loss downstream.
+                err_msg = f"CRITICAL: Failed to extract ANY frame for shot {shot_id} (Range: {start_f}-{end_f})"
+                if logger: logger.log_error("CV_ENGINE", Exception(err_msg))
+                cap.release()
+                raise RuntimeError(err_msg)
 
-                # 3. Persistence
-                img_filename = f"{shot_id}_{mid_idx}.jpg"
-                img_path = os.path.join(frames_dir, img_filename)
-                cv2.imwrite(img_path, frame, [cv2.IMWRITE_JPEG_QUALITY, Config.IMAGE_QUALITY])
-                
-                # Relative path used for frontend loading
-                shot_images.append(os.path.join('frames', img_filename))
+            # --- LOGGING ---
+            used_idx, strategy = success_meta
+            if used_idx != mid_idx and logger:
+                # Notify forensic log that a fallback was required
+                logger.log('SHOT_DETECT', f"[WARNING] Fallback triggered for {shot_id}. Midpoint {mid_idx} failed. Used {used_idx} ({strategy}).")
 
-            shot["image_paths"] = shot_images
+            # --- PROCESSING ---
+            # 1. Geometry Normalization
+            height, width = extracted_frame.shape[:2]
+            scale = Config.IMAGE_WIDTH / float(width)
+            target_h = int(height * scale)
+            extracted_frame = cv2.resize(extracted_frame, (Config.IMAGE_WIDTH, target_h), interpolation=cv2.INTER_AREA)
+
+            # 2. Visual Grounding: Burn Shot ID into the pixels
+            # This ensures the VLM can explicitly reference the ID seen in the image.
+            text = f"SHOT ID: {shot_id}"
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            (text_w, text_h), baseline = cv2.getTextSize(text, font, 0.5, 1)
+            x, y = 8, 25 
+            
+            # Draw white backing box for readability
+            cv2.rectangle(extracted_frame, (x - 4, y - text_h - 6), (x + text_w + 4, y + 4), (255, 255, 255), cv2.FILLED)
+            # Draw black text
+            cv2.putText(extracted_frame, text, (x, y), font, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+            # 3. Persistence
+            img_filename = f"{shot_id}_{used_idx}.jpg"
+            img_path = os.path.join(frames_dir, img_filename)
+            cv2.imwrite(img_path, extracted_frame, [cv2.IMWRITE_JPEG_QUALITY, Config.IMAGE_QUALITY])
+            
+            # Relative path used for frontend loading
+            shot["image_paths"] = [os.path.join('frames', img_filename)]
 
             if logger and (idx + 1) % 20 == 0:
-                logger.log('SCENE_DETECT', f"Extracted visual anchors for {idx + 1}/{len(shots)} shots")
+                logger.log('SHOT_DETECT', f"Extracted visual anchors for {idx + 1}/{len(shots)} shots")
 
         cap.release()
+
+        # Final Verification
+        valid_count = sum(1 for s in shots if s.get('image_paths') and len(s['image_paths']) > 0)
+        
+        if logger:
+            if valid_count == len(shots):
+                # Only log the "N/N" message if we actually verified it.
+                logger.log('SHOT_DETECT', f"Extracted visual anchors for {valid_count}/{len(shots)} shots")
+            else:
+                # This should theoretically be unreachable due to the RuntimeError above,
+                # but good for defensive programming.
+                logger.log('ERROR', f"Visual anchor mismatch! Only {valid_count}/{len(shots)} shots have valid frames.")
+
         if logger: logger.pop_context('COMPLETE')
         return shots
